@@ -72,12 +72,12 @@ namespace AgendaOnline.WebApi.Controllers
          
         [HttpPost("Login")]
         [AllowAnonymous]
-        public async Task<ActionResult<dynamic>> Login([FromBody]UserLoginDto userLogin)
+        public async Task<IActionResult> Login(UserLoginDto userLogin)
         {
-            //try
-            //{
+            // try
+            // {
                 var user = await _userManager.FindByNameAsync(userLogin.UserName);
-                var result = await _signInManager.PasswordSignInAsync(user.Email, userLogin.Password, false, false);
+                var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
 
                 if (!result.Succeeded)
                     return NotFound(new { message = "Usu�rio ou senha incorretas" });
