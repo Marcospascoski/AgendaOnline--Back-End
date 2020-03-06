@@ -13,6 +13,7 @@ namespace AgendaOnline.WebApi.Dtos
         public string ImagemPerfil { get; set; }
         public string Email { get; set; }
         public string MarketSegment { get; set; }
+        public string Cidade { get; set; }
         public TimeSpan Abertura { get; set; }
         public TimeSpan Fechamento { get; set; }
         public TimeSpan? Duracao { get; set; }

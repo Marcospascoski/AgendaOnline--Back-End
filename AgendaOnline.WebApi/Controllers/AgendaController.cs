@@ -26,7 +26,7 @@ namespace AgendaOnline.WebApi.Controllers
             _mapper = mapper;
             _repo = repo;
         }
-
+        
         [HttpGet("Get")]
         [AllowAnonymous]
         public async Task<IActionResult> Get()
@@ -93,8 +93,6 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                //implementar deletar usuario
-
                 var usuarios = await _repo.ObterTodosUsuariosAsync();
                 //var dados = usuarios.Select(x => x.Company  x.MarketSegment);
                 var results = _mapper.Map<UserDto[]>(usuarios);
@@ -133,7 +131,10 @@ namespace AgendaOnline.WebApi.Controllers
             var agendamentoModel = _mapper.Map<Agenda>(agendaDto);
             var clientesAgendados = await _repo.ObterClientesAgendadosMesmaDataAsync(agendamentoModel);
             var horariosAtendimento = await _repo.ObterHorariosAtendimento(agendamentoModel);
+            
             TimeSpan horarioAgendado = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
+            TimeSpan horarioFimUsuario = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
+            TimeSpan horarioIniUsuario = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
             try
             {
                 if (agendamentoModel.DataHora > DateTime.Now)
