@@ -4,14 +4,16 @@ using AgendaOnline.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AgendaOnline.Repository.Migrations
 {
     [DbContext(typeof(AgendaContext))]
-    partial class AgendaContextModelSnapshot : ModelSnapshot
+    [Migration("20200309191002_InserindoCampoRole")]
+    partial class InserindoCampoRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,6 +40,64 @@ namespace AgendaOnline.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Agendas");
+                });
+
+            modelBuilder.Entity("AgendaOnline.Domain.Identity.Adm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<TimeSpan>("Abertura");
+
+                    b.Property<int>("AccessFailedCount");
+
+                    b.Property<string>("Cidade");
+
+                    b.Property<string>("Company");
+
+                    b.Property<string>("ConcurrencyStamp");
+
+                    b.Property<TimeSpan>("Duracao");
+
+                    b.Property<string>("Email");
+
+                    b.Property<bool>("EmailConfirmed");
+
+                    b.Property<TimeSpan>("Fechamento");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("ImagemPerfil");
+
+                    b.Property<bool>("LockoutEnabled");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd");
+
+                    b.Property<string>("MarketSegment");
+
+                    b.Property<string>("NormalizedEmail");
+
+                    b.Property<string>("NormalizedUserName");
+
+                    b.Property<string>("PasswordHash");
+
+                    b.Property<string>("PhoneNumber");
+
+                    b.Property<bool>("PhoneNumberConfirmed");
+
+                    b.Property<string>("Role");
+
+                    b.Property<string>("SecurityStamp");
+
+                    b.Property<bool>("TwoFactorEnabled");
+
+                    b.Property<string>("UserName");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Adms");
                 });
 
             modelBuilder.Entity("AgendaOnline.Domain.Identity.Role", b =>
@@ -71,27 +131,17 @@ namespace AgendaOnline.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<TimeSpan>("Abertura");
-
                     b.Property<int>("AccessFailedCount");
 
                     b.Property<string>("Celular");
 
-                    b.Property<string>("Cidade");
-
-                    b.Property<string>("Company");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken();
-
-                    b.Property<TimeSpan>("Duracao");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256);
 
                     b.Property<bool>("EmailConfirmed");
-
-                    b.Property<TimeSpan>("Fechamento");
 
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(150)");
@@ -101,8 +151,6 @@ namespace AgendaOnline.Repository.Migrations
                     b.Property<bool>("LockoutEnabled");
 
                     b.Property<DateTimeOffset?>("LockoutEnd");
-
-                    b.Property<string>("MarketSegment");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256);
@@ -144,7 +192,11 @@ namespace AgendaOnline.Repository.Migrations
 
                     b.Property<int>("RoleId");
 
+                    b.Property<int?>("AdmId");
+
                     b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("AdmId");
 
                     b.HasIndex("RoleId");
 
@@ -223,6 +275,10 @@ namespace AgendaOnline.Repository.Migrations
 
             modelBuilder.Entity("AgendaOnline.Domain.Identity.UserRole", b =>
                 {
+                    b.HasOne("AgendaOnline.Domain.Identity.Adm")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("AdmId");
+
                     b.HasOne("AgendaOnline.Domain.Identity.Role", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")

@@ -17,7 +17,7 @@ using AgendaOnline.WebApi.Dtos;
 
 namespace AgendaOnline.WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]"), Authorize(Roles = "User")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -50,12 +50,9 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                if(!userDto.Duracao.HasValue)
-                {
-                    userDto.Duracao.Equals("00:00:00");
-                }
-                
                 var user = _mapper.Map<User>(userDto);
+                user.Role = "User";
+                await _userManager.AddToRoleAsync(user, user.Role);
                 var result = await _userManager.CreateAsync(user, userDto.Password);
                 var userToReturn = _mapper.Map<UserDto>(user);
                 if(result.Succeeded)
@@ -74,8 +71,8 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login(UserLoginDto userLogin)
         {
-            // try
-            // {
+            try
+            {
                 var user = await _userManager.FindByNameAsync(userLogin.UserName);
                 var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
 
@@ -94,12 +91,12 @@ namespace AgendaOnline.WebApi.Controllers
                     });
                 }
                 return Unauthorized();
-            //}
-            //catch (System.Exception ex)
-            //{
+            }
+            catch (System.Exception ex)
+            {
                 
-            //    return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
-            //}
+               return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
+            }
         }
 
         private async Task<string> GenerateJWToken(User user)
@@ -121,7 +118,7 @@ namespace AgendaOnline.WebApi.Controllers
                     .GetBytes(_config.GetSection("AppSettings:Token").Value));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
+            
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
@@ -131,7 +128,7 @@ namespace AgendaOnline.WebApi.Controllers
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
-
+            
             return tokenHandler.WriteToken(token);
         }
     }

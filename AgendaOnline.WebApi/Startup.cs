@@ -44,7 +44,7 @@ namespace AgendaOnline.WebApi
             services.AddDbContext<AgendaContext>(
                 x => x.UseSqlServer(Configuration.GetConnectionString("AgendaConnection"))                
                 );    
-
+            
             IdentityBuilder builder = services.AddIdentityCore<User>(options => 
             {
                 options.Password.RequireDigit = false;
@@ -59,7 +59,7 @@ namespace AgendaOnline.WebApi
             builder.AddRoleValidator<RoleValidator<Role>>();
             builder.AddRoleManager<RoleManager<Role>>();
             builder.AddSignInManager<SignInManager<User>>();
-
+            
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
              .AddJwtBearer(options =>
                 {
