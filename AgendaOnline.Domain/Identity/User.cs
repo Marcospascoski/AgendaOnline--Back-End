@@ -11,6 +11,7 @@ namespace AgendaOnline.Domain.Identity
         
         [Column(TypeName = "nvarchar(150)")]
         public string FullName { get; set; }
+        public string Password { get; set; }
         public string ImagemPerfil { get; set; }
         public string Company { get; set; }
         public string MarketSegment { get; set; }
