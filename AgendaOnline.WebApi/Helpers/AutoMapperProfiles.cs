@@ -11,6 +11,7 @@ namespace AgendaOnline.WebApi.Helpers
         public AutoMapperProfiles()
         {
             CreateMap<User, UserDto>().ReverseMap();
+            CreateMap<User, AdmDto>().ReverseMap();
             CreateMap<User, UserLoginDto>().ReverseMap();
             CreateMap<Agenda, AgendaDto>().ReverseMap();
         }

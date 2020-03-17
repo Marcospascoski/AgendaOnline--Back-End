@@ -87,15 +87,15 @@ namespace AgendaOnline.WebApi.Controllers
             }
         }
 
-        [HttpGet("ListaUsuariosPorAgenda")]
+        [HttpGet("ListaAdminsPorAgenda")]
         [AllowAnonymous]
-        public async Task<ActionResult> ListaUsuariosPorAgenda()
+        public async Task<ActionResult> ListaAdminsPorAgenda()
         {
             try
             {
                 var usuarios = await _repo.ObterTodosUsuariosAsync();
                 //var dados = usuarios.Select(x => x.Company  x.MarketSegment);
-                var results = _mapper.Map<UserDto[]>(usuarios);
+                var results = _mapper.Map<AdmDto[]>(usuarios);
 
                 return Ok(results);
             }

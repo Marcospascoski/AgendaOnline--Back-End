@@ -20,14 +20,14 @@ namespace AgendaOnline.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class AdmController : ControllerBase
     {
         private readonly IConfiguration _config;
         private readonly UserManager<User> _userManager;
         private readonly IMapper _mapper;
         private readonly SignInManager<User> _signInManager;
 
-        public UserController(IConfiguration config,
+        public AdmController(IConfiguration config,
                               UserManager<User> userManager,
                               SignInManager<User> signInManager,
                               IMapper mapper)
@@ -38,26 +38,24 @@ namespace AgendaOnline.WebApi.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet("GetUser")]
-        [Authorize(Roles="User")]
-        public async Task<IActionResult> GetUser()
+        [HttpGet("GetAdm")]
+        [Authorize(Roles = "Adm")]
+        public async Task<IActionResult> GetAdm()
         {
-            return Ok(new UserDto());
+            return Ok(new AdmDto());
         }
 
-        [HttpPost("registerUser")]
+        [HttpPost("registerAdm")]
         [AllowAnonymous]
-        public async Task<IActionResult> registerUser(UserDto userDto)
+        public async Task<IActionResult> registerAdm(AdmDto admDto)
         {
-            var userModel = _mapper.Map<User>(userDto);
-            //userModel.UserRoles = ""
             try
             {
-                var user = _mapper.Map<User>(userDto);
-                user.Role = "User";
-                var result = await _userManager.CreateAsync(user, userDto.Password);
-                await _userManager.AddToRoleAsync(user, user.Role);
-                var userToReturn = _mapper.Map<UserDto>(user);
+                var admUser = _mapper.Map<User>(admDto);
+                admUser.Role = "Adm";
+                var result = await _userManager.CreateAsync(admUser, admDto.Password);
+                await _userManager.AddToRoleAsync(admUser, admUser.Role);
+                var userToReturn = _mapper.Map<AdmDto>(admUser);
                 if(result.Succeeded)
                 {
                     return Created("GetUser", userToReturn);

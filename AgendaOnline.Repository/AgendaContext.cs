@@ -13,7 +13,7 @@ namespace AgendaOnline.Repository
          public AgendaContext(DbContextOptions<AgendaContext> options): base (options){}
          
          public DbSet<Agenda> Agendas { get; set; }    
-         public DbSet<User> Usuarios { get; set; }    
+         public DbSet<User> Usuarios { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
          { 

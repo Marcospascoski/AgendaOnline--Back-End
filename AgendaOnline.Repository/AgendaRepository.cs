@@ -86,9 +86,9 @@ namespace AgendaOnline.Repository
 
         public async Task<List<TimeSpan>> ObterHorariosAtendimento(Agenda agenda)
         {
-            var duracao = _context.Users.Where(x => x.Id == agenda.UserId).Select(x => x.Duracao).ToList().First();
-            var abertura = _context.Users.Where(x => x.Id == agenda.UserId).Select(x => x.Abertura).First();
-            var fechamento = _context.Users.Where(x => x.Id == agenda.UserId).Select(x => x.Fechamento).ToList().First();
+            var duracao = _context.Usuarios.Where(x => x.Id == agenda.UserId).Select(x => x.Duracao).ToList().First();
+            var abertura = _context.Usuarios.Where(x => x.Id == agenda.UserId).Select(x => x.Abertura).First();
+            var fechamento = _context.Usuarios.Where(x => x.Id == agenda.UserId).Select(x => x.Fechamento).ToList().First();
            
             List<TimeSpan> horarios = new List<TimeSpan>();
             TimeSpan calc = new TimeSpan();
