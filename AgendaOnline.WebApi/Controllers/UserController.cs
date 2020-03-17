@@ -48,6 +48,8 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> register(UserDto userDto)
         {
+            var userModel = _mapper.Map<User>(userDto);
+            //userModel.UserRoles = ""
             try
             {
                 if(!userDto.Duracao.HasValue)
