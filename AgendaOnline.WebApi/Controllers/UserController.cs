@@ -49,8 +49,6 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> registerUser(UserDto userDto)
         {
-            var userModel = _mapper.Map<User>(userDto);
-            //userModel.UserRoles = ""
             try
             {
                 var user = _mapper.Map<User>(userDto);
