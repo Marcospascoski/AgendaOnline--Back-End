@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using AgendaOnline.Domain.Identity;
 using AgendaOnline.WebApi.Dtos;
 using System.Linq;
+using AgendaOnline.Repository;
 
 namespace AgendaOnline.WebApi.Controllers
 {
@@ -22,16 +23,19 @@ namespace AgendaOnline.WebApi.Controllers
     [ApiController]
     public class AdmController : ControllerBase
     {
+        private readonly IAgendaRepository _repo;
         private readonly IConfiguration _config;
         private readonly UserManager<User> _userManager;
         private readonly IMapper _mapper;
         private readonly SignInManager<User> _signInManager;
 
-        public AdmController(IConfiguration config,
+        public AdmController(IAgendaRepository repo,
+                              IConfiguration config,
                               UserManager<User> userManager,
                               SignInManager<User> signInManager,
                               IMapper mapper)
         {
+            _repo = repo;
             _signInManager = signInManager;
             _mapper = mapper;
             _config = config;
@@ -52,22 +56,30 @@ namespace AgendaOnline.WebApi.Controllers
             try
             {
                 var admUser = _mapper.Map<User>(admDto);
-                admUser.Role = "Adm";
-                var result = await _userManager.CreateAsync(admUser, admDto.Password);
-                await _userManager.AddToRoleAsync(admUser, admUser.Role);
-                var userToReturn = _mapper.Map<AdmDto>(admUser);
-                if(result.Succeeded)
+                var empresaCadastrada = await _repo.EmpresaCadastradaAsync(admUser);
+                if (empresaCadastrada.Length > 0)
                 {
-                    return Created("GetUser", userToReturn);
+                    return Ok("Empresa já cadastrada");
                 }
-                return BadRequest(result.Errors);
+                else{
+                    admUser.Role = "Adm";
+                    var result = await _userManager.CreateAsync(admUser, admDto.Password);
+                    await _userManager.AddToRoleAsync(admUser, admUser.Role);
+
+                    var userToReturn = _mapper.Map<AdmDto>(admUser);
+                    if (result.Succeeded)
+                    {
+                        return Created("GetUser", userToReturn);
+                    }
+                    return BadRequest(result.Errors);
+                }
             }
             catch (System.Exception ex)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
             }
         }
-         
+
         [HttpPost("Login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(User userLogin)
@@ -76,7 +88,7 @@ namespace AgendaOnline.WebApi.Controllers
             {
                 var user = await _userManager.FindByNameAsync(userLogin.UserName);
                 var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
-                
+
                 if (!result.Succeeded)
                     return NotFound(new { message = "Usu�rio ou senha incorretas" });
 
@@ -84,7 +96,7 @@ namespace AgendaOnline.WebApi.Controllers
                 {
                     var role = await _userManager.GetRolesAsync(user);
                     IdentityOptions _options = new IdentityOptions();
-                    
+
                     var key = new SymmetricSecurityKey(Encoding.ASCII
                     .GetBytes(_config.GetSection("AppSettings:Token").Value));
 
@@ -101,14 +113,14 @@ namespace AgendaOnline.WebApi.Controllers
                     var tokenHandler = new JwtSecurityTokenHandler();
                     var securityToken = tokenHandler.CreateToken(tokenDescriptor);
                     var token = tokenHandler.WriteToken(securityToken);
-                    return Ok(new {token});
+                    return Ok(new { token });
                 }
                 return Unauthorized();
             }
             catch (System.Exception ex)
             {
-                
-               return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
+
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
             }
         }
     }

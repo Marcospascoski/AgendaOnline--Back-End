@@ -18,7 +18,7 @@ namespace AgendaOnline.Domain
         
         public string Celular { get; set; }
 
-        public int? UserId { get; set; }
+        public int? AdmId { get; set; }
 
         public virtual User User { get;}
     }

@@ -24,6 +24,6 @@ namespace AgendaOnline.WebApi.Dtos
         [Phone]
         [Required (ErrorMessage="Campo Celular é obrigatório")]
         public string Celular { get; set; }
-        public int? UserId { get; set; }
+        public int? AdmId { get; set; }
     }
 }

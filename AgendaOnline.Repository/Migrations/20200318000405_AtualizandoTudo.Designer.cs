@@ -4,14 +4,16 @@ using AgendaOnline.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AgendaOnline.Repository.Migrations
 {
     [DbContext(typeof(AgendaContext))]
-    partial class AgendaContextModelSnapshot : ModelSnapshot
+    [Migration("20200318000405_AtualizandoTudo")]
+    partial class AtualizandoTudo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,8 +27,6 @@ namespace AgendaOnline.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("AdmId");
-
                     b.Property<string>("Celular");
 
                     b.Property<DateTime>("DataHora");
@@ -34,6 +34,8 @@ namespace AgendaOnline.Repository.Migrations
                     b.Property<string>("Email");
 
                     b.Property<string>("Nome");
+
+                    b.Property<int?>("UserId");
 
                     b.HasKey("Id");
 

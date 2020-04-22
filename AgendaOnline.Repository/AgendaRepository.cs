@@ -54,13 +54,13 @@ namespace AgendaOnline.Repository
 
         public async Task<Agenda[]> ObterTodosAgendamentosPorUsuarioAsync(int UserId)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(x => x.UserId == UserId);
+            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == UserId);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
         }
-        
-        public async Task<User[]> ObterTodosUsuariosAsync()
+
+        public async Task<User[]> ObterTodosAdminsAsync()
         {
             IQueryable<User> query = _context.Users.OrderByDescending(x => x.Id);
             query = query.AsNoTracking();
@@ -70,7 +70,7 @@ namespace AgendaOnline.Repository
 
         public async Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora);
+            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && a.AdmId == agenda.AdmId);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
@@ -84,12 +84,59 @@ namespace AgendaOnline.Repository
             return await query.ToArrayAsync();
         }
 
+        public async Task<List<TimeSpan>> ObterHorariosDisponiveis(string empresa, DateTime data)
+        {
+            var idPorEmpresa = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Id).First();
+            List<DateTime> datasPorId;
+            //Horarios agendados pela data e nome da empresa
+            List<TimeSpan> horasPorDataEmpresa = new List<TimeSpan>();
+            if (idPorEmpresa > 0)
+            {
+                datasPorId = _context.Agendas.Where(x => x.AdmId == idPorEmpresa).Select(x => x.DataHora).ToList();
+                if(datasPorId.Count > 0)
+                {
+                    horasPorDataEmpresa = _context.Agendas.Where(x => x.DataHora.Date == data.Date).Select(x => x.DataHora.TimeOfDay).ToList();
+                }
+                
+            }
+
+            var duracao = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Duracao).ToList().First();
+            var abertura = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Abertura).ToList().First();
+            var fechamento = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Fechamento).ToList().First();
+
+            //Horarios que a empresa trabalha
+            List<TimeSpan> horarios = new List<TimeSpan>();
+            TimeSpan calc = new TimeSpan();
+            calc = abertura;
+            horarios.Add(calc);
+            while (calc < fechamento)
+            {
+                calc = calc.Add(duracao);
+                horarios.Add(calc);
+            }
+
+            if(horarios.Last() > fechamento)
+            {
+                horarios.Remove(horarios.Last());
+            }
+
+            foreach (var horariosAgendados in horasPorDataEmpresa)
+            {
+                if (horarios.Contains(horariosAgendados))
+                {
+                    horarios.Remove(horariosAgendados);
+                }
+            }
+
+            return horarios;
+        }
+
         public async Task<List<TimeSpan>> ObterHorariosAtendimento(Agenda agenda)
         {
-            var duracao = _context.Usuarios.Where(x => x.Id == agenda.UserId).Select(x => x.Duracao).ToList().First();
-            var abertura = _context.Usuarios.Where(x => x.Id == agenda.UserId).Select(x => x.Abertura).First();
-            var fechamento = _context.Usuarios.Where(x => x.Id == agenda.UserId).Select(x => x.Fechamento).ToList().First();
-           
+            var duracao = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Duracao).ToList().First();
+            var abertura = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Abertura).ToList().First();
+            var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
+
             List<TimeSpan> horarios = new List<TimeSpan>();
             TimeSpan calc = new TimeSpan();
             calc = abertura;
@@ -123,6 +170,31 @@ namespace AgendaOnline.Repository
                          .Where(c => c.Id == AgendaId);
 
             return await query.FirstOrDefaultAsync();
+        }
+
+        public async Task<User[]> EmpresaCadastradaAsync(User user)
+        {
+            IQueryable<User> query = _context.Users.Where(x => x.Company == user.Company);
+            query = query.AsNoTracking();
+
+            return await query.ToArrayAsync();
+        }
+
+        public async Task<bool> TemEmpresa(string empresa)
+        {
+            var lResult = true;
+            var idPorEmpresa = _context.Usuarios.Where(x => x.Company == empresa).ToList();
+            if (idPorEmpresa.Count > 0) lResult = true;
+            else lResult = false;
+
+            return lResult;
+        }
+
+        public async Task<List<string>> FiltrarEmpresas(string textEmpresa)
+        {
+            var todasEmpresas = _context.Usuarios.Where(x => x.Company.Contains(textEmpresa)).Select(x => x.Company).ToList();
+
+            return todasEmpresas;
         }
     }
 }

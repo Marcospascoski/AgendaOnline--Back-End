@@ -77,9 +77,59 @@ namespace AgendaOnline.WebApi.Controllers
                 {
                     return Ok("Não há agendamentos para este Usuário");
                 }
-                var results = _mapper.Map<AgendaDto>(agendamentoAtual);
+                //var results = _mapper.Map<AgendaDto>(agendamentoAtual);
 
-                return Ok(results);
+                return Ok(agendamentoAtual);
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+            }
+        }
+
+        [HttpGet("HorariosDisponiveis")]
+        [AllowAnonymous]
+        public async Task<ActionResult> HorariosDisponiveis(string empresa, DateTime data)
+        {
+            try
+            {
+                var dataFormatada = data.ToString("dd/MM/yyyy");
+                var dataTipada = DateTime.Parse(dataFormatada);
+                var temEmpresa = await _repo.TemEmpresa(empresa);
+                if (temEmpresa)
+                {
+                    var horariosDisponiveis = await _repo.ObterHorariosDisponiveis(empresa, dataTipada.Date);
+
+                    if (horariosDisponiveis.Count > 0)
+                    {
+                        return Ok(horariosDisponiveis);
+                    }
+                    else
+                    {
+                        return Ok("indisponível");
+                    }
+                }
+                return Ok("empresainvalida");
+
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+            }
+        }
+
+        [HttpGet("BuscarEmpresas")]
+        [AllowAnonymous]
+        public async Task<ActionResult> BuscarEmpresas(string text)
+        {
+            try
+            {
+                var resultadosFiltro = await _repo.FiltrarEmpresas(text);
+                if (resultadosFiltro.Count > 0)
+                {
+                    return Ok(resultadosFiltro);
+                }
+                return Ok("Não encontrado");
             }
             catch (System.Exception)
             {
@@ -93,7 +143,7 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var usuarios = await _repo.ObterTodosUsuariosAsync();
+                var usuarios = await _repo.ObterTodosAdminsAsync();
                 //var dados = usuarios.Select(x => x.Company  x.MarketSegment);
                 var results = _mapper.Map<AdmDto[]>(usuarios);
 
@@ -151,17 +201,17 @@ namespace AgendaOnline.WebApi.Controllers
                         }
                         else
                         {
-                            return Ok("Escolha um horário de Atendimento válido");
+                            return Ok("valido");
                         }
                     }
                     else
                     {
-                        return Ok("Escolha uma data que ainda não foi agendada");
+                        return Ok("dataCerta");
                     }
                 }
                 else
                 {
-                    return Ok("Escolha uma data/hora após a deste momento");
+                    return Ok("momento");
                 }
             }
             catch (System.Exception ex)
