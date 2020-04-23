@@ -17,6 +17,9 @@ namespace AgendaOnline.WebApi.Dtos
         public TimeSpan Abertura { get; set; }
         public TimeSpan Fechamento { get; set; }
         public TimeSpan? Duracao { get; set; }
+        public TimeSpan? AlmocoIni { get; set; }
+        public TimeSpan? AlmocoFim { get; set; }
+        public int Fds { get; set; }    
         public string Password { get; set; }
         public string FullName { get; set; }   
     }

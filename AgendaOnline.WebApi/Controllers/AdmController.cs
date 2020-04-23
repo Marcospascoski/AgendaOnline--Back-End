@@ -43,7 +43,7 @@ namespace AgendaOnline.WebApi.Controllers
         }
 
         [HttpGet("GetAdm")]
-        [Authorize(Roles = "Adm")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAdm()
         {
             return Ok(new AdmDto());
@@ -57,6 +57,7 @@ namespace AgendaOnline.WebApi.Controllers
             {
                 var admUser = _mapper.Map<User>(admDto);
                 var empresaCadastrada = await _repo.EmpresaCadastradaAsync(admUser);
+                
                 if (empresaCadastrada.Length > 0)
                 {
                     return Ok("Empresa já cadastrada");

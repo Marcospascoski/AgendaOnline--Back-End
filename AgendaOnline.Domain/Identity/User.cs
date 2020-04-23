@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 
@@ -17,6 +18,9 @@ namespace AgendaOnline.Domain.Identity
         public string MarketSegment { get; set; }
         public string Cidade { get; set; }
         public TimeSpan Abertura { get; set; }
+        public TimeSpan AlmocoIni { get; set; }
+        public TimeSpan AlmocoFim { get; set; }
+        public int Fds { get; set; }     
         public TimeSpan Fechamento { get; set; }
         public TimeSpan Duracao { get; set; }
         public string Celular { get; set; }

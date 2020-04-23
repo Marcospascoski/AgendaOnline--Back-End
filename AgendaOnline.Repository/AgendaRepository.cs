@@ -103,6 +103,8 @@ namespace AgendaOnline.Repository
             var duracao = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Duracao).ToList().First();
             var abertura = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Abertura).ToList().First();
             var fechamento = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Fechamento).ToList().First();
+            var almocoIni = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.AlmocoIni).ToList().First();
+            var almocoFim = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.AlmocoFim).ToList().First();
 
             //Horarios que a empresa trabalha
             List<TimeSpan> horarios = new List<TimeSpan>();
@@ -128,6 +130,8 @@ namespace AgendaOnline.Repository
                 }
             }
 
+            horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
+
             return horarios;
         }
 
@@ -136,6 +140,8 @@ namespace AgendaOnline.Repository
             var duracao = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Duracao).ToList().First();
             var abertura = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Abertura).ToList().First();
             var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
+            var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
+            var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
 
             List<TimeSpan> horarios = new List<TimeSpan>();
             TimeSpan calc = new TimeSpan();
@@ -146,7 +152,9 @@ namespace AgendaOnline.Repository
                 calc = calc.Add(duracao);
                 horarios.Add(calc);
             }
-
+            
+            horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
+            
             return horarios;
         }
 
