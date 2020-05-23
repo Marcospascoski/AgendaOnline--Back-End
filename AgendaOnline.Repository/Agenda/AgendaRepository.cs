@@ -116,7 +116,7 @@ namespace AgendaOnline.Repository
                 calc = calc.Add(duracao);
                 horarios.Add(calc);
             }
-
+            
             if(horarios.Last() > fechamento)
             {
                 horarios.Remove(horarios.Last());

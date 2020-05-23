@@ -38,9 +38,9 @@ namespace AgendaOnline.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // services.AddDbContext<ProAgilContext>(
-            //     x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))                
-            //     );
+            services.AddDbContext<EventoContext>(
+                x => x.UseSqlServer(Configuration.GetConnectionString("AgendaConnection"))                
+                );
             services.AddDbContext<AgendaContext>(
                 x => x.UseSqlServer(Configuration.GetConnectionString("AgendaConnection"))                
                 );    

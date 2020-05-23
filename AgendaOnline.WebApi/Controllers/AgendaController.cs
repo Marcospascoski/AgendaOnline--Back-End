@@ -294,7 +294,7 @@ namespace AgendaOnline.WebApi.Controllers
             }
             return BadRequest();
         }
-
+        
         [HttpDelete("{AgendaId}")]
         public async Task<IActionResult> Delete(int AgendaId)
         {
