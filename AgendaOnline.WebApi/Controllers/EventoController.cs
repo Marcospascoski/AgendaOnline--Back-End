@@ -31,6 +31,7 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> DeclararMotivo(EventoDto eventoDto)
         {
+            eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
             var eventoModel = _mapper.Map<Evento>(eventoDto);
             try
             {

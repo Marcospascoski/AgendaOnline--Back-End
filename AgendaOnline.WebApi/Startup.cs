@@ -87,6 +87,7 @@ namespace AgendaOnline.WebApi
             Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             services.AddScoped<IAgendaRepository, AgendaRepository>();
+            services.AddScoped<IEventoRepository, EventoRepository>();
             services.AddAutoMapper();
             services.AddCors();  
         }
