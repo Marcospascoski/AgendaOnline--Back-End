@@ -33,21 +33,33 @@ namespace AgendaOnline.WebApi.Controllers
         {
             eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
             var eventoModel = _mapper.Map<Evento>(eventoDto);
-            try
+
+            var eventoRepetido = await _repo.EventoRepetido(eventoModel);
+            if(eventoRepetido == false)
             {
-                 _repo.Add(eventoModel);
-                 if (await _repo.SaveChangesAsync())
-                 {
-                    return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(eventoModel));
-                 }
-                 else{
-                    return BadRequest(); 
-                 }
+                try
+                {
+                    _repo.Add(eventoModel);
+                    if (await _repo.SaveChangesAsync())
+                    {
+                        return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(eventoModel));
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+
+                }
+                catch (System.Exception e)
+                {
+                    return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+                }
             }
-            catch (System.Exception e)
+            else
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+                return Ok("DataHora já foi Excluida");
             }
+            
         }
         
         [HttpDelete("{AdmId}")]

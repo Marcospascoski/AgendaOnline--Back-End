@@ -44,12 +44,22 @@ namespace AgendaOnline.Repository
             return (await _context.SaveChangesAsync()) > 0;
         }
 
-        public async Task<Evento[]> teste()
+        public async Task<bool> EventoRepetido(Evento evento)
         {
-            IQueryable<Evento> query = _context.Eventos;
+            bool result = true;
+            IQueryable<Evento> query = _context.Eventos.Where(x => x.AdmId == evento.AdmId && x.DataHora == evento.DataHora);
             query = query.AsNoTracking();
 
-            return await query.ToArrayAsync();
+            if(query.ToArrayAsync() != null)
+            {
+                result = true;
+            }
+            else
+            {
+                result = false;
+            }
+
+            return result;
         }
 
     }

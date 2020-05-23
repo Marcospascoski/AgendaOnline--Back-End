@@ -14,6 +14,7 @@ namespace AgendaOnline.Repository
          void DeleteRange<T>( T[] entity) where T : class;
 
          Task<bool> SaveChangesAsync();
-     
+
+        Task<bool> EventoRepetido(Evento evento);   
     }
 }
