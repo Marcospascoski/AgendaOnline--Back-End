@@ -26,7 +26,15 @@ namespace AgendaOnline.WebApi.Controllers
             _mapper = mapper;
             _repo = repo;
         }
-        
+
+        [AllowAnonymous]
+        public async Task ExluirEventosPassados(Evento[] eventos)
+        {
+            //Chamar Delete
+            _repo.DeleteRange(eventos);
+            await _repo.SaveChangesAsync();
+        }
+
         [HttpPost("DeclararMotivo")]
         [AllowAnonymous]
         public async Task<IActionResult> DeclararMotivo(EventoDto eventoDto)
@@ -34,55 +42,44 @@ namespace AgendaOnline.WebApi.Controllers
             eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
             var eventoModel = _mapper.Map<Evento>(eventoDto);
 
-            var eventoRepetido = await _repo.EventoRepetido(eventoModel);
-            if(eventoRepetido == false)
-            {
-                try
-                {
-                    _repo.Add(eventoModel);
-                    if (await _repo.SaveChangesAsync())
-                    {
-                        return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(eventoModel));
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
+            var eventoDesatualizado = await _repo.DataHorasUltrapassadas(eventoModel);
+            if(eventoDesatualizado.Length > 0)
+               await ExluirEventosPassados(eventoDesatualizado);
 
-                }
-                catch (System.Exception e)
+            if (eventoModel.DataHora > DateTime.Now)
+            {
+                var eventoRepetido = await _repo.EventoRepetido(eventoModel);
+                if (eventoRepetido == false)
                 {
-                    return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+                    try
+                    {
+                        _repo.Add(eventoModel);
+                        if (await _repo.SaveChangesAsync())
+                        {
+                            return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(eventoModel));
+                        }
+                        else
+                        {
+                            return BadRequest();
+                        }
+
+                    }
+                    catch (System.Exception e)
+                    {
+                        return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+                    }
+                }
+                else
+                {
+                    return Ok("indispon√≠vel");
                 }
             }
             else
             {
-                return Ok("DataHora j· foi Excluida");
+                return Ok("DataHora Ultrapassada");
             }
             
         }
         
-        [HttpDelete("{AdmId}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> IndisponibilizarData(int AdmId)
-        {
-            try
-            {
-                // var evento = await _repo.ObterAgendamentoPorIdAsync(AdmId);
-                // if (agendamento == null) return NotFound();
-                
-                // _repo.Delete(agendamento);
-
-                // if (await _repo.SaveChangesAsync())
-                // {
-                //     return Ok();
-                // }
-            }
-            catch (System.Exception)
-            {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
-            }
-            return BadRequest();
-        }
     }
 }

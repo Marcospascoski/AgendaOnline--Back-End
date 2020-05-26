@@ -93,6 +93,7 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
+                //Excluir Horários Excluidos da query de horários disponíveis
                 var dataFormatada = data.ToString("dd/MM/yyyy");
                 var dataTipada = DateTime.Parse(dataFormatada);
                 var temEmpresa = await _repo.TemEmpresa(empresa);
@@ -179,46 +180,57 @@ namespace AgendaOnline.WebApi.Controllers
         {
             //Validações
             var agendamentoModel = _mapper.Map<Agenda>(agendaDto);
+
             var clientesAgendados = await _repo.ObterClientesAgendadosMesmaDataAsync(agendamentoModel);
             var horariosAtendimento = await _repo.ObterHorariosAtendimento(agendamentoModel);
+            var agendamentoIndisponivel = await _repo.VerificarIndisponibilidade(agendamentoModel);
             
             TimeSpan horarioAgendado = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
             TimeSpan horarioFimUsuario = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
             TimeSpan horarioIniUsuario = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
             try
             {
-                if (agendamentoModel.DataHora > DateTime.Now)
+                if(agendamentoIndisponivel.ToString() == "")
                 {
-                    if (clientesAgendados.Length <= 0)
+                    if (agendamentoModel.DataHora > DateTime.Now)
                     {
-                        if (horariosAtendimento.Contains(horarioAgendado))
+                        if (clientesAgendados.Length <= 0)
                         {
-                            _repo.Add(agendamentoModel);
-                            if (await _repo.SaveChangesAsync())
+                            if (horariosAtendimento.Contains(horarioAgendado))
                             {
-                                return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
+                                _repo.Add(agendamentoModel);
+                                if (await _repo.SaveChangesAsync())
+                                {
+                                    return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
+                                }
+                            }
+                            else
+                            {
+                                return Ok("valido");
                             }
                         }
                         else
                         {
-                            return Ok("valido");
+                            return Ok("dataCerta");
                         }
                     }
                     else
                     {
-                        return Ok("dataCerta");
+                        return Ok("momento");
                     }
                 }
                 else
                 {
-                    return Ok("momento");
+                    return Ok(agendamentoIndisponivel.ToString());
                 }
+
             }
             catch (System.Exception ex)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de dados Falhou {ex.Message}");
             }
             return BadRequest();
+
         }
 
         [AllowAnonymous]

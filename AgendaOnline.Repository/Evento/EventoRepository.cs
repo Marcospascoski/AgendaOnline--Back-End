@@ -44,22 +44,36 @@ namespace AgendaOnline.Repository
             return (await _context.SaveChangesAsync()) > 0;
         }
 
-        public async Task<bool> EventoRepetido(Evento evento)
+        public async Task<Evento[]> DataHorasUltrapassadas(Evento evento)
         {
-            bool result = true;
-            IQueryable<Evento> query = _context.Eventos.Where(x => x.AdmId == evento.AdmId && x.DataHora == evento.DataHora);
+            IQueryable<Evento> query = _context.Eventos.Where(e => e.AdmId == evento.AdmId && e.DataHora < DateTime.Now);
             query = query.AsNoTracking();
 
-            if(query.ToArrayAsync() != null)
+            return await query.ToArrayAsync();
+        }
+
+        public async Task<bool> EventoRepetido(Evento evento)
+        {
+
+            TimeSpan diaTodoIndisponivel = new TimeSpan(0, 0, 0);
+            var dataHoraAdm = _context.Eventos.Where(e => e.AdmId == evento.AdmId && e.DataHora > DateTime.Now).ToList();
+            var diaEscolhido = dataHoraAdm.Where(x => x.DataHora.Date == evento.DataHora.Date).ToList();
+            var diaIndisponibilizado = diaEscolhido.Where(x => x.DataHora.TimeOfDay == diaTodoIndisponivel).ToList();
+            var dataHoraEscolhida = dataHoraAdm.Where(x => x.DataHora == evento.DataHora).ToList();
+
+            if (dataHoraEscolhida.Count > 0)
             {
-                result = true;
+                return await Task.FromResult(true);
+            }
+            if (diaIndisponibilizado.Count > 0)
+            {
+                return await Task.FromResult(true);
             }
             else
             {
-                result = false;
+                return await Task.FromResult(false);
             }
 
-            return result;
         }
 
     }

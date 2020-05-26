@@ -14,6 +14,7 @@ namespace AgendaOnline.Repository
          
          public DbSet<Agenda> Agendas { get; set; }    
          public DbSet<User> Usuarios { get; set; }
+         public DbSet<Evento> Eventos { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
          { 

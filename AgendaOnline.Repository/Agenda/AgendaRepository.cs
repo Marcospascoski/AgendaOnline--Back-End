@@ -89,16 +89,6 @@ namespace AgendaOnline.Repository
             var idPorEmpresa = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Id).First();
             List<DateTime> datasPorId;
             //Horarios agendados pela data e nome da empresa
-            List<TimeSpan> horasPorDataEmpresa = new List<TimeSpan>();
-            if (idPorEmpresa > 0)
-            {
-                datasPorId = _context.Agendas.Where(x => x.AdmId == idPorEmpresa).Select(x => x.DataHora).ToList();
-                if(datasPorId.Count > 0)
-                {
-                    horasPorDataEmpresa = _context.Agendas.Where(x => x.DataHora.Date == data.Date).Select(x => x.DataHora.TimeOfDay).ToList();
-                }
-                
-            }
 
             var duracao = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Duracao).ToList().First();
             var abertura = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Abertura).ToList().First();
@@ -120,14 +110,6 @@ namespace AgendaOnline.Repository
             if(horarios.Last() > fechamento)
             {
                 horarios.Remove(horarios.Last());
-            }
-
-            foreach (var horariosAgendados in horasPorDataEmpresa)
-            {
-                if (horarios.Contains(horariosAgendados))
-                {
-                    horarios.Remove(horariosAgendados);
-                }
             }
 
             horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
@@ -156,6 +138,28 @@ namespace AgendaOnline.Repository
             horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
             
             return horarios;
+        }
+
+        public async Task<string> VerificarIndisponibilidade(Agenda agenda)
+        {
+
+            TimeSpan diaTodoIndisponivel = new TimeSpan();
+            var dataHoraAdm = _context.Eventos.Where(x => x.AdmId == agenda.AdmId && x.DataHora == agenda.DataHora).ToList();
+            var dataAdm = _context.Eventos.Where(x => x.AdmId == agenda.AdmId && x.DataHora.Date == agenda.DataHora.Date).ToList();
+
+            var agendamentosIndisponiveis = dataHoraAdm.Select(x => x.Motivo).ToList();
+            var diaIndisponibilizado = dataAdm.Where(x => x.DataHora.TimeOfDay == diaTodoIndisponivel).Select(x => x.Motivo).ToList();
+
+            if(diaIndisponibilizado.Count > 0)
+            {
+                return await Task.FromResult(diaIndisponibilizado.FirstOrDefault());
+            }
+            if (agendamentosIndisponiveis.Count > 0)
+            {
+                return await Task.FromResult(agendamentosIndisponiveis.FirstOrDefault());
+            }
+
+            return await Task.FromResult("");
         }
 
         public Agenda[] ObterServicosFinalizadosAsync(Agenda[] agendamentos)
