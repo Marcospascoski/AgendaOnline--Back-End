@@ -72,14 +72,14 @@ namespace AgendaOnline.WebApi.Controllers
                 var agendamentoDesatualizado = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
                 await MotorRemocao(agendamentoDesatualizado);
                 
-                var agendamentoAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
-                if(agendamentoAtual.Length <= 0)
+                var agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
+                if(agendaAtual.Length <= 0)
                 {
-                    return Ok("Não há agendamentos para este Usuário");
+                    return Ok("nao agendamento");
                 }
                 //var results = _mapper.Map<AgendaDto>(agendamentoAtual);
 
-                return Ok(agendamentoAtual);
+                return Ok(agendaAtual);
             }
             catch (System.Exception)
             {
@@ -155,18 +155,30 @@ namespace AgendaOnline.WebApi.Controllers
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
             }
         }
-
-        [HttpGet("ListaDiasAgendados")]
+        
+        [HttpGet("ListaDiasAgendados/{AdmId}")]
         [AllowAnonymous]
-        public async Task<ActionResult> ListaDiasAgendados()
+        public async Task<ActionResult> ListaDiasAgendados(int AdmId)
         {
             try
             {
-                var dias = await _repo.ObterDiasAgendadosAsync();
-                var diasDto = _mapper.Map<AgendaDto[]>(dias);
-                var results = diasDto.ToArray().Select(x => x.DataHora.Day + "/" + x.DataHora.Month + "/" + x.DataHora.Year).Distinct();
 
-                return Ok(results);
+                var dias = await _repo.ObterDiasAgendadosAsync(AdmId);
+                var diasDto = _mapper.Map<AgendaDto[]>(dias);
+                var results = diasDto.ToArray().Select(x => x.DataHora.Day + "/" + x.DataHora.Month + "/" + x.DataHora.Year).Distinct().ToList();
+
+                if(results.Count > 0)
+                {
+                    var agendamentosPorUsuario = await _repo.ObterTodosAgendamentosPorUsuarioAsync(AdmId);
+                    await MotorRemocao(agendamentosPorUsuario);
+
+                    return Ok(results);
+                }
+                else
+                {
+                    return Ok("vazio");
+                }
+                
             }
             catch (System.Exception)
             {

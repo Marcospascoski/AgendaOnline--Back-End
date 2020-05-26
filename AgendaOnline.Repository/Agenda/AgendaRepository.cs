@@ -75,10 +75,10 @@ namespace AgendaOnline.Repository
 
             return await query.ToArrayAsync();
         }
-
-        public async Task<Agenda[]> ObterDiasAgendadosAsync()
+        
+        public async Task<Agenda[]> ObterDiasAgendadosAsync(int AdmId)
         {
-            IQueryable<Agenda> query = _context.Agendas.OrderBy(x => x.DataHora);
+            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == AdmId).OrderBy(x => x.DataHora);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
@@ -89,15 +89,18 @@ namespace AgendaOnline.Repository
             var idPorEmpresa = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Id).First();
             List<DateTime> datasPorId;
             //Horarios agendados pela data e nome da empresa
-
             var duracao = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Duracao).ToList().First();
             var abertura = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Abertura).ToList().First();
             var fechamento = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.Fechamento).ToList().First();
             var almocoIni = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.AlmocoFim).ToList().First();
+            var datasIndisponiveis = _context.Eventos.Where(x => x.AdmId == idPorEmpresa && x.DataHora.Date == data.Date).Select(x => x.DataHora).ToList();
 
             //Horarios que a empresa trabalha
             List<TimeSpan> horarios = new List<TimeSpan>();
+            List<TimeSpan> horariosIndisponiveis = new List<TimeSpan>();
+            TimeSpan diaIndisponivel = new TimeSpan(0,0,0);
+
             TimeSpan calc = new TimeSpan();
             calc = abertura;
             horarios.Add(calc);
@@ -106,10 +109,28 @@ namespace AgendaOnline.Repository
                 calc = calc.Add(duracao);
                 horarios.Add(calc);
             }
+
+            foreach (var horIndis in datasIndisponiveis)
+            {
+                horariosIndisponiveis.Add(horIndis.TimeOfDay);
+            }
             
             if(horarios.Last() > fechamento)
             {
                 horarios.Remove(horarios.Last());
+            }
+
+            foreach (var horInd in horariosIndisponiveis)
+            {
+                if(horInd == diaIndisponivel)
+                {
+                    horarios.RemoveAll(x => x.Equals(x));
+                }
+                else
+                {
+                    horarios.Remove(horInd);
+                }
+                
             }
 
             horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);

@@ -20,7 +20,7 @@ namespace AgendaOnline.Repository
          Task<Agenda> ObterAgendamentoPorIdAsync(int agendamentoId);
          Task<User[]> ObterTodosAdminsAsync();
          Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda);
-         Task<Agenda[]> ObterDiasAgendadosAsync();
+         Task<Agenda[]> ObterDiasAgendadosAsync(int AdmId);
          Task<List<TimeSpan>> ObterHorariosAtendimento(Agenda agenda);
          Task<string> VerificarIndisponibilidade(Agenda agenda);
          Task<List<TimeSpan>> ObterHorariosDisponiveis(string empresa, DateTime data);
