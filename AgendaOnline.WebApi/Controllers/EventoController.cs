@@ -35,6 +35,30 @@ namespace AgendaOnline.WebApi.Controllers
             await _repo.SaveChangesAsync();
         }
 
+        //[HttpGet("ListaEventosPorAdm/{AdmId}")]
+        //[AllowAnonymous]
+        //public async Task<ActionResult> ListaEventosPorAdm(int AdmId)
+        //{
+        //    try
+        //    {
+        //        var eventos = await _repo.ObterEventosPorAdmIdAsync(AdmId);
+        //        var diasDto = _mapper.Map<EventoDto[]>(eventos);
+        //        var datasModel = diasDto.ToArray().Select(x => x.DataHora.Date).Distinct().ToList();
+
+        //        List<DateTime> datasCorretas = new List<DateTime>();
+        //        foreach (var data in datasModel)
+        //        {
+        //            datasCorretas.Add(DateTime.Parse(data.ToString("dd/MM/yyyy")));
+        //        }
+
+        //        return Ok(datasCorretas);
+        //    }
+        //    catch (System.Exception)
+        //    {
+        //        return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+        //    }
+        //}
+
         [HttpPost("DeclararMotivo")]
         [AllowAnonymous]
         public async Task<IActionResult> DeclararMotivo(EventoDto eventoDto)

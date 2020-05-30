@@ -26,7 +26,7 @@ namespace AgendaOnline.WebApi.Controllers
             _mapper = mapper;
             _repo = repo;
         }
-        
+
         [HttpGet("Get")]
         [AllowAnonymous]
         public async Task<IActionResult> Get()
@@ -71,9 +71,9 @@ namespace AgendaOnline.WebApi.Controllers
             {
                 var agendamentoDesatualizado = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
                 await MotorRemocao(agendamentoDesatualizado);
-                
+
                 var agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
-                if(agendaAtual.Length <= 0)
+                if (agendaAtual.Length <= 0)
                 {
                     return Ok("nao agendamento");
                 }
@@ -145,7 +145,6 @@ namespace AgendaOnline.WebApi.Controllers
             try
             {
                 var usuarios = await _repo.ObterTodosAdminsAsync();
-                //var dados = usuarios.Select(x => x.Company  x.MarketSegment);
                 var results = _mapper.Map<AdmDto[]>(usuarios);
 
                 return Ok(results);
@@ -155,7 +154,7 @@ namespace AgendaOnline.WebApi.Controllers
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
             }
         }
-        
+
         [HttpGet("ListaDiasAgendados/{AdmId}")]
         [AllowAnonymous]
         public async Task<ActionResult> ListaDiasAgendados(int AdmId)
@@ -166,8 +165,8 @@ namespace AgendaOnline.WebApi.Controllers
                 var dias = await _repo.ObterDiasAgendadosAsync(AdmId);
                 var diasDto = _mapper.Map<AgendaDto[]>(dias);
                 var results = diasDto.ToArray().Select(x => x.DataHora.Day + "/" + x.DataHora.Month + "/" + x.DataHora.Year).Distinct().ToList();
-                
-                if(results.Count > 0)
+
+                if (results.Count > 0)
                 {
                     var agendamentosPorUsuario = await _repo.ObterTodosAgendamentosPorUsuarioAsync(AdmId);
                     await MotorRemocao(agendamentosPorUsuario);
@@ -178,7 +177,7 @@ namespace AgendaOnline.WebApi.Controllers
                 {
                     return Ok("vazio");
                 }
-                
+
             }
             catch (System.Exception)
             {
@@ -192,34 +191,56 @@ namespace AgendaOnline.WebApi.Controllers
         {
             //Validações
             var agendamentoModel = _mapper.Map<Agenda>(agendaDto);
+            TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 
             var clientesAgendados = await _repo.ObterClientesAgendadosMesmaDataAsync(agendamentoModel);
             var horariosAtendimento = await _repo.ObterHorariosAtendimento(agendamentoModel);
+            var horarioInicioFim = await _repo.ObterInicioFim(agendamentoModel);
             var agendamentoIndisponivel = await _repo.VerificarIndisponibilidade(agendamentoModel);
-            
+
             TimeSpan horarioAgendado = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
-            TimeSpan horarioFimUsuario = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
-            TimeSpan horarioIniUsuario = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
             try
             {
-                if(agendamentoIndisponivel.ToString() == "")
+                if (agendamentoIndisponivel.ToString() == "")
                 {
                     if (agendamentoModel.DataHora > DateTime.Now)
                     {
                         if (clientesAgendados.Length <= 0)
                         {
-                            if (horariosAtendimento.Contains(horarioAgendado))
+                            if (horariosAtendimento.Count > 1 && horariosAtendimento[0] != semDuracao)
                             {
-                                _repo.Add(agendamentoModel);
-                                if (await _repo.SaveChangesAsync())
+                                if (horariosAtendimento.Contains(horarioAgendado))
                                 {
-                                    return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
+                                    _repo.Add(agendamentoModel);
+                                    if (await _repo.SaveChangesAsync())
+                                    {
+                                        return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
+                                    }
+                                }
+                                else
+                                {
+                                    return Ok("valido");
                                 }
                             }
-                            else
+                            else if (horariosAtendimento.Count == 1 && horariosAtendimento[0] == semDuracao)
                             {
-                                return Ok("valido");
+                                if (agendamentoModel.DataHora.TimeOfDay >= horarioInicioFim[1] &&
+                                    agendamentoModel.DataHora.TimeOfDay < horarioInicioFim[2] ||
+                                    agendamentoModel.DataHora.TimeOfDay < horarioInicioFim[0] ||
+                                    agendamentoModel.DataHora.TimeOfDay > horarioInicioFim[3])
+                                {
+                                    return Ok("horarioImproprio");
+                                }
+                                else
+                                {
+                                    _repo.Add(agendamentoModel);
+                                    if (await _repo.SaveChangesAsync())
+                                    {
+                                        return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
+                                    }
+                                }
                             }
+
                         }
                         else
                         {
@@ -318,7 +339,7 @@ namespace AgendaOnline.WebApi.Controllers
             }
             return BadRequest();
         }
-        
+
         [HttpDelete("{AgendaId}")]
         public async Task<IActionResult> Delete(int AgendaId)
         {

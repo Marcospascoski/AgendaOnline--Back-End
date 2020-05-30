@@ -52,6 +52,14 @@ namespace AgendaOnline.Repository
             return await query.ToArrayAsync();
         }
 
+        public async Task<Evento[]> ObterEventosPorAdmIdAsync(int AdmId)
+        {
+            IQueryable<Evento> query = _context.Eventos.Where( x => x.AdmId == AdmId).OrderByDescending(x => x.Id);
+            query = query.AsNoTracking();
+
+            return await query.ToArrayAsync();
+        }
+
         public async Task<bool> EventoRepetido(Evento evento)
         {
 

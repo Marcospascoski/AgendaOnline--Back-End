@@ -145,19 +145,48 @@ namespace AgendaOnline.Repository
             var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
             var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
-
+            TimeSpan semDuracao = new TimeSpan(0, 0, 0);
             List<TimeSpan> horarios = new List<TimeSpan>();
-            TimeSpan calc = new TimeSpan();
-            calc = abertura;
-            horarios.Add(calc);
-            while (calc < fechamento)
+
+            if (duracao == semDuracao)
             {
-                calc = calc.Add(duracao);
+                horarios.Add(semDuracao);
+            }
+            else
+            {
+                TimeSpan calc = new TimeSpan();
+                calc = abertura;
                 horarios.Add(calc);
+                while (calc < fechamento)
+                {
+                    calc = calc.Add(duracao);
+                    horarios.Add(calc);
+                }
+
+                horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
             }
             
-            horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
-            
+            return horarios;
+        }
+
+        public async Task<List<TimeSpan>> ObterInicioFim(Agenda agenda)
+        {
+            var duracao = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Duracao).ToList().First();
+            var abertura = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Abertura).ToList().First();
+            var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
+            var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
+            var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
+            TimeSpan semDuracao = new TimeSpan(0, 0, 0);
+
+            List<TimeSpan> horarios = new List<TimeSpan>();
+            if (duracao == semDuracao)
+            {
+                horarios.Add(abertura);
+                horarios.Add(almocoIni);
+                horarios.Add(almocoFim);
+                horarios.Add(fechamento);
+            }
+
             return horarios;
         }
 

@@ -16,6 +16,7 @@ namespace AgendaOnline.Repository
          Task<bool> SaveChangesAsync();
 
         Task<Evento[]> DataHorasUltrapassadas(Evento evento);
+        Task<Evento[]> ObterEventosPorAdmIdAsync(int AdmId);
         Task<bool> EventoRepetido(Evento evento);   
     }
 }
