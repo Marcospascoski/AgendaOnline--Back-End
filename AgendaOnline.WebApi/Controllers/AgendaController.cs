@@ -97,18 +97,36 @@ namespace AgendaOnline.WebApi.Controllers
                 var dataFormatada = data.ToString("dd/MM/yyyy");
                 var dataTipada = DateTime.Parse(dataFormatada);
                 var temEmpresa = await _repo.TemEmpresa(empresa);
+                TimeSpan semDuracao = new TimeSpan(0, 0, 0);
                 if (temEmpresa)
                 {
-                    var horariosDisponiveis = await _repo.ObterHorariosDisponiveis(empresa, dataTipada.Date);
-
-                    if (horariosDisponiveis.Count > 0)
+                    if(data >= DateTime.Now.Date)
                     {
-                        return Ok(horariosDisponiveis);
+                        var horariosDisponiveis = await _repo.ObterHorariosDisponiveis(empresa, dataTipada.Date);
+
+                        if(horariosDisponiveis.Count != 1 && horariosDisponiveis[0] != semDuracao)
+                        {
+                            if (horariosDisponiveis.Count > 0)
+                            {
+                                return Ok(horariosDisponiveis);
+                            }
+                            else
+                            {
+                                return Ok("indisponível");
+                            }
+                        }
+                        else
+                        {
+                            return Ok("duracaoNaoEstipulada");
+                        }
+                        
+
                     }
                     else
                     {
-                        return Ok("indisponível");
+                        return Ok("diaVencido");
                     }
+                    
                 }
                 return Ok("empresainvalida");
 

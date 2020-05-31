@@ -104,36 +104,46 @@ namespace AgendaOnline.Repository
             TimeSpan calc = new TimeSpan();
             calc = abertura;
             horarios.Add(calc);
-            while (calc < fechamento)
-            {
-                calc = calc.Add(duracao);
-                horarios.Add(calc);
-            }
 
-            foreach (var horIndis in datasIndisponiveis)
+            if(duracao == diaIndisponivel)
             {
-                horariosIndisponiveis.Add(horIndis.TimeOfDay);
+                horarios.RemoveAll(x => x.Equals(x));
+                horarios.Add(diaIndisponivel);
+                return horarios;
             }
+            else
+            {
+                while (calc < fechamento)
+                {
+                    calc = calc.Add(duracao);
+                    horarios.Add(calc);
+                }
+
+                foreach (var horIndis in datasIndisponiveis)
+                {
+                    horariosIndisponiveis.Add(horIndis.TimeOfDay);
+                }
+
+                if (horarios.Last() > fechamento)
+                {
+                    horarios.Remove(horarios.Last());
+                }
+
+                foreach (var horInd in horariosIndisponiveis)
+                {
+                    if (horInd == diaIndisponivel)
+                    {
+                        horarios.RemoveAll(x => x.Equals(x));
+                    }
+                    else
+                    {
+                        horarios.Remove(horInd);
+                    }
+
+                }
+                horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
             
-            if(horarios.Last() > fechamento)
-            {
-                horarios.Remove(horarios.Last());
             }
-
-            foreach (var horInd in horariosIndisponiveis)
-            {
-                if(horInd == diaIndisponivel)
-                {
-                    horarios.RemoveAll(x => x.Equals(x));
-                }
-                else
-                {
-                    horarios.Remove(horInd);
-                }
-                
-            }
-
-            horarios.RemoveAll(x => x >= almocoIni && x <= almocoFim);
 
             return horarios;
         }
