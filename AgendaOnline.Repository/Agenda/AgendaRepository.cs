@@ -145,6 +145,8 @@ namespace AgendaOnline.Repository
             var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
             var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
+
+            
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
             List<TimeSpan> horarios = new List<TimeSpan>();
 
@@ -176,6 +178,10 @@ namespace AgendaOnline.Repository
             var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
             var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
+
+            var duracaoServico = _context.Agendas.Where(x => x.Duracao == agenda.Duracao).Select(x => x.Duracao).ToList().First();
+            var horaMarcada = _context.Agendas.Select(x => x.DataHora.TimeOfDay).ToList().First();
+
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 
             List<TimeSpan> horarios = new List<TimeSpan>();
@@ -185,6 +191,23 @@ namespace AgendaOnline.Repository
                 horarios.Add(almocoIni);
                 horarios.Add(almocoFim);
                 horarios.Add(fechamento);
+            }
+
+            if(horaMarcada > horarios[0] && horaMarcada < horarios[horarios.Count / 2] || 
+               horaMarcada < horarios[horarios.Count] && horaMarcada > horarios[(horarios.Count / 2) + 1])
+            {
+               for (int hora = 0; hora < horarios.Count; hora++)
+               {
+                   if(hora % 2 == 1){
+                      if(horaMarcada >= horarios[hora] && horaMarcada < horarios[hora + 1])
+                      {
+                         horarios.Add(semDuracao); 
+                      }               
+                   }
+               }
+            }
+            else{
+                horarios.Add(semDuracao);
             }
 
             return horarios;

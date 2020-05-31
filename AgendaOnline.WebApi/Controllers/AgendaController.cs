@@ -222,25 +222,20 @@ namespace AgendaOnline.WebApi.Controllers
                                     return Ok("valido");
                                 }
                             }
-                            else if (horariosAtendimento.Count == 1 && horariosAtendimento[0] == semDuracao)
+                            else if (horarioInicioFim.Count == 1 && horarioInicioFim[0] == semDuracao)
                             {
-                                if (agendamentoModel.DataHora.TimeOfDay >= horarioInicioFim[1] &&
-                                    agendamentoModel.DataHora.TimeOfDay < horarioInicioFim[2] ||
-                                    agendamentoModel.DataHora.TimeOfDay < horarioInicioFim[0] ||
-                                    agendamentoModel.DataHora.TimeOfDay > horarioInicioFim[3])
+                                
+                                return Ok("horarioImproprio");
+                                
+                            }
+                            else
+                            {
+                                _repo.Add(agendamentoModel);
+                                if (await _repo.SaveChangesAsync())
                                 {
-                                    return Ok("horarioImproprio");
-                                }
-                                else
-                                {
-                                    _repo.Add(agendamentoModel);
-                                    if (await _repo.SaveChangesAsync())
-                                    {
-                                        return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
-                                    }
+                                    return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
                                 }
                             }
-
                         }
                         else
                         {
