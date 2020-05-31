@@ -15,6 +15,8 @@ namespace AgendaOnline.Domain
         public string Email { get; set; }
 
         public DateTime DataHora { get; set; }
+
+        public TimeSpan Duracao { get; set; }
         
         public string Celular { get; set; }
 

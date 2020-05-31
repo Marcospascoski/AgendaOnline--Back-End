@@ -31,6 +31,8 @@ namespace AgendaOnline.Repository.Migrations
 
                     b.Property<DateTime>("DataHora");
 
+                    b.Property<TimeSpan>("Duracao");
+
                     b.Property<string>("Email");
 
                     b.Property<string>("Nome");
@@ -38,6 +40,23 @@ namespace AgendaOnline.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Agendas");
+                });
+
+            modelBuilder.Entity("AgendaOnline.Domain.Evento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("AdmId");
+
+                    b.Property<DateTime>("DataHora");
+
+                    b.Property<string>("Motivo");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Eventos");
                 });
 
             modelBuilder.Entity("AgendaOnline.Domain.Identity.Role", b =>
