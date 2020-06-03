@@ -189,8 +189,7 @@ namespace AgendaOnline.Repository
             var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
 
-            var duracaoServico = _context.Agendas.Where(x => x.Duracao == agenda.Duracao).Select(x => x.Duracao).ToList().First();
-            var horaMarcada = _context.Agendas.Select(x => x.DataHora.TimeOfDay).ToList().First();
+            var horaMarcada = agenda.DataHora.TimeOfDay;
 
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 

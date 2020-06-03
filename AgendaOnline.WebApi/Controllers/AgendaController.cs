@@ -179,7 +179,6 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-
                 var dias = await _repo.ObterDiasAgendadosAsync(AdmId);
                 var diasDto = _mapper.Map<AgendaDto[]>(dias);
                 var results = diasDto.ToArray().Select(x => x.DataHora.Day + "/" + x.DataHora.Month + "/" + x.DataHora.Year).Distinct().ToList();
