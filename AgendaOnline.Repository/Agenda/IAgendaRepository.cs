@@ -18,15 +18,15 @@ namespace AgendaOnline.Repository
          Task<Agenda[]> teste();
          Task<Agenda[]> ObterTodosAgendamentosPorUsuarioAsync(int usuarioId);
          Task<Agenda> ObterAgendamentoPorIdAsync(int agendamentoId);
-         Task<User[]> ObterTodosAdminsAsync();
+         Task<List<User>> ObterTodosAdminsAsync();
          Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda);
          Task<Agenda[]> ObterDiasAgendadosAsync(int AdmId);
          Task<List<TimeSpan>> ObterHorariosAtendimento(Agenda agenda);
          Task<List<TimeSpan>> ObterInicioFim(Agenda agenda);
          Task<string> VerificarIndisponibilidade(Agenda agenda);
          Task<List<TimeSpan>> ObterHorariosDisponiveis(string empresa, DateTime data);
-         Agenda[] ObterServicosFinalizadosAsync(Agenda[] agendamentos);
-         Agenda[] ObterServicosVencidosAsync(Agenda[] agendamentos);
+         Agenda[] ObterServicosFinalizadosAsync(int UserId);
+         Agenda[] ObterServicosVencidosAsync(int UserId);
          Task<User[]> EmpresaCadastradaAsync(User user);
          Task<bool> TemEmpresa (string empresa);
          Task<List<string>> FiltrarEmpresas(string textEmpresa);  

@@ -44,6 +44,14 @@ namespace AgendaOnline.Repository
             return (await _context.SaveChangesAsync()) > 0;
         }
 
+        public async Task<Evento[]> EventoExistente(Evento evento)
+        {
+            IQueryable<Evento> query = _context.Eventos.Where( x => x.AdmId == evento.AdmId && x.DataHora == evento.DataHora);
+            query = query.AsNoTracking();
+
+            return await query.ToArrayAsync();
+        }
+
         public async Task<Evento[]> DataHorasUltrapassadas(Evento evento)
         {
             IQueryable<Evento> query = _context.Eventos.Where(e => e.AdmId == evento.AdmId && e.DataHora < DateTime.Now);

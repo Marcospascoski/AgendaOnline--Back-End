@@ -27,41 +27,6 @@ namespace AgendaOnline.WebApi.Controllers
             _repo = repo;
         }
 
-        [HttpGet("Get")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Get()
-        {
-            try
-            {
-                var agendamentoDesatualizado = await _repo.teste();
-                agendamentoDesatualizado.OrderByDescending(c => c.DataHora);
-
-                if (agendamentoDesatualizado.Length > 0)
-                {
-                    await MotorRemocao(agendamentoDesatualizado);
-
-                    var agendamentoAtual = await _repo.teste();
-                    var results = _mapper.Map<AgendaDto[]>(agendamentoAtual);
-                    if (results != null)
-                    {
-                        return Ok(results);
-                    }
-                    else
-                    {
-                        return Ok(new AgendaDto());
-                    }
-                }
-                else
-                {
-                    return Ok(new AgendaDto());
-                }
-
-            }
-            catch (System.Exception e)
-            {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, e);
-            }
-        }
 
         [HttpGet("ListaAgendamentosPorUsuario/{UserId}")]
         [AllowAnonymous]
@@ -69,9 +34,6 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var agendamentoDesatualizado = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
-                await MotorRemocao(agendamentoDesatualizado);
-
                 var agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
                 if (agendaAtual.Length <= 0)
                 {
@@ -81,7 +43,7 @@ namespace AgendaOnline.WebApi.Controllers
 
                 return Ok(agendaAtual);
             }
-            catch (System.Exception)
+            catch (System.Exception e)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
             }
@@ -98,13 +60,14 @@ namespace AgendaOnline.WebApi.Controllers
                 var dataTipada = DateTime.Parse(dataFormatada);
                 var temEmpresa = await _repo.TemEmpresa(empresa);
                 TimeSpan semDuracao = new TimeSpan(0, 0, 0);
+                TimeSpan duracaoEmpresaNaoEstipulada = new TimeSpan(1, 0, 0);
                 if (temEmpresa)
                 {
                     if(data >= DateTime.Now.Date)
                     {
                         var horariosDisponiveis = await _repo.ObterHorariosDisponiveis(empresa, dataTipada.Date);
-
-                        if(horariosDisponiveis.Count != 1 && horariosDisponiveis[0] != semDuracao)
+                        var semDisponibilidade = horariosDisponiveis.FirstOrDefault();
+                        if(semDisponibilidade != duracaoEmpresaNaoEstipulada)
                         {
                             if (horariosDisponiveis.Count > 0)
                             {
@@ -167,7 +130,7 @@ namespace AgendaOnline.WebApi.Controllers
 
                 return Ok(results);
             }
-            catch (System.Exception)
+            catch (System.Exception e)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
             }
@@ -185,9 +148,6 @@ namespace AgendaOnline.WebApi.Controllers
 
                 if (results.Count > 0)
                 {
-                    var agendamentosPorUsuario = await _repo.ObterTodosAgendamentosPorUsuarioAsync(AdmId);
-                    await MotorRemocao(agendamentosPorUsuario);
-
                     return Ok(results);
                 }
                 else
@@ -239,6 +199,7 @@ namespace AgendaOnline.WebApi.Controllers
                                     return Ok("valido");
                                 }
                             }
+                            // deixar horarioInicioFim.Count == 1 
                             else if (horarioInicioFim.Count == 1 && horarioInicioFim[0] == semDuracao)
                             {
                                 
@@ -278,24 +239,45 @@ namespace AgendaOnline.WebApi.Controllers
 
         }
 
+        [HttpDelete("MotorRemocao/{UserId}")]
         [AllowAnonymous]
-        public async Task MotorRemocao(Agenda[] agendamentos)
+        public async Task<IActionResult> MotorRemocao(int UserId)
         {
-            var horaAtual = DateTime.Now.ToString("HH:mm:ss");
-            var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(agendamentos);
-            var idDataServicosVencidos = _repo.ObterServicosVencidosAsync(agendamentos);
+            try
+            {
+                var horaAtual = DateTime.Now.ToString("HH:mm:ss");
+                var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(UserId);
+                var idDataServicosVencidos = _repo.ObterServicosVencidosAsync(UserId);
 
-            if (idDataServicoFinalizado.Length > 0)
-            {
-                //Chamar Delete
-                _repo.DeleteRange(idDataServicoFinalizado);
+                if (idDataServicoFinalizado.Length > 0)
+                {
+                    //Chamar Delete
+                    _repo.DeleteRange(idDataServicoFinalizado);
+                    if (await _repo.SaveChangesAsync())
+                    {
+                        return Ok();
+                    }
+                }
+                else if (idDataServicosVencidos.Length > 0)
+                {
+                    //Chamar Delete
+                    _repo.DeleteRange(idDataServicosVencidos);
+                    if (await _repo.SaveChangesAsync())
+                    {
+                        return Ok();
+                    }
+                }
+                else
+                {
+                    return Ok();
+                }
             }
-            else if (idDataServicosVencidos.Length > 0)
+            catch (System.Exception)
             {
-                //Chamar Delete
-                _repo.DeleteRange(idDataServicosVencidos);
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
             }
-            await _repo.SaveChangesAsync();
+            return BadRequest();
+
         }
 
         [HttpPost("upload")]

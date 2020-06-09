@@ -28,36 +28,76 @@ namespace AgendaOnline.WebApi.Controllers
         }
 
         [AllowAnonymous]
-        public async Task ExluirEventosPassados(Evento[] eventos)
+        public async Task ExluirEventos(Evento[] eventos)
         {
             //Chamar Delete
-            _repo.DeleteRange(eventos);
-            await _repo.SaveChangesAsync();
+            if(eventos.Length == 1)
+            {
+                _repo.Delete(eventos[0]);
+                await _repo.SaveChangesAsync();
+            }
+            else
+            {
+                _repo.DeleteRange(eventos);
+                await _repo.SaveChangesAsync();
+            }
+            
         }
 
-        //[HttpGet("ListaEventosPorAdm/{AdmId}")]
-        //[AllowAnonymous]
-        //public async Task<ActionResult> ListaEventosPorAdm(int AdmId)
-        //{
-        //    try
-        //    {
-        //        var eventos = await _repo.ObterEventosPorAdmIdAsync(AdmId);
-        //        var diasDto = _mapper.Map<EventoDto[]>(eventos);
-        //        var datasModel = diasDto.ToArray().Select(x => x.DataHora.Date).Distinct().ToList();
+        [HttpGet("ListaDeDatasExcluidas/{admId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ListaDeDatasExcluidas(int admId)
+        {
+            try
+            {
+                TimeSpan diaTodo = new TimeSpan(0, 0, 0);
+                var eventosPorPrestador = await _repo.ObterEventosPorAdmIdAsync(admId);
+                var eventosDatasFormatadas = eventosPorPrestador.Select(x => x.DataHora.TimeOfDay == diaTodo ? x.DataHora.Day+"/"+x.DataHora.Month+"/"+x.DataHora.Year : x.DataHora.ToString()).ToList();
 
-        //        List<DateTime> datasCorretas = new List<DateTime>();
-        //        foreach (var data in datasModel)
-        //        {
-        //            datasCorretas.Add(DateTime.Parse(data.ToString("dd/MM/yyyy")));
-        //        }
+                if (eventosDatasFormatadas.Count > 0)
+                {
+                    return Ok(eventosDatasFormatadas);
+                }
+                else
+                {
+                    return Ok("naoEncontrado");
+                }
 
-        //        return Ok(datasCorretas);
-        //    }
-        //    catch (System.Exception)
-        //    {
-        //        return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
-        //    }
-        //}
+            }
+            catch (System.Exception e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+            }
+        }
+
+
+        [HttpPost("DisponibilizarEvento")]
+        [AllowAnonymous]
+        public async Task<IActionResult> DisponibilizarEvento(EventoDto eventoDto)
+        {
+
+            try
+            {
+                eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
+                
+                var eventoModel = _mapper.Map<Evento>(eventoDto);
+                var eventoBase = await _repo.EventoExistente(eventoModel);
+                if(eventoBase.Length == 1)
+                {
+                    await ExluirEventos(eventoBase);
+                    return Ok();
+                }
+                else
+                {
+                    return Ok("eventoInexistente");
+                }
+
+            }
+            catch(Exception e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+            }
+        }
 
         [HttpPost("DeclararMotivo")]
         [AllowAnonymous]
@@ -68,7 +108,7 @@ namespace AgendaOnline.WebApi.Controllers
 
             var eventoDesatualizado = await _repo.DataHorasUltrapassadas(eventoModel);
             if(eventoDesatualizado.Length > 0)
-               await ExluirEventosPassados(eventoDesatualizado);
+               await ExluirEventos(eventoDesatualizado);
 
             if (eventoModel.DataHora > DateTime.Now)
             {
