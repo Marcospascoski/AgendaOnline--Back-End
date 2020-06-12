@@ -45,6 +45,8 @@ namespace AgendaOnline.WebApi
                 x => x.UseSqlServer(Configuration.GetConnectionString("AgendaConnection"))                
                 );    
             
+            services.AddScoped<Services.AgendaService>();
+
             IdentityBuilder builder = services.AddIdentityCore<User>(options => 
             {
                 options.Password.RequireDigit = false;

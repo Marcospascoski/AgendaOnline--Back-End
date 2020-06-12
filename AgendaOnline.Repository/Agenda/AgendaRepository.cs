@@ -44,9 +44,9 @@ namespace AgendaOnline.Repository
             return (await _context.SaveChangesAsync()) > 0;
         }
 
-        public async Task<Agenda[]> teste()
+        public async Task<Agenda[]> ObterAgenda(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas;
+            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == agenda.AdmId && x.DataHora.Date == agenda.DataHora.Date);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
@@ -154,7 +154,7 @@ namespace AgendaOnline.Repository
                 }
                 horarios.RemoveAll(x => x >= almocoIni && x < almocoFim);
 
-                if(DateTime.Now == DateTime.Today)
+                if(data == DateTime.Today)
                 {
                     horarios.RemoveAll(x => x < DateTime.Now.TimeOfDay);
                 }

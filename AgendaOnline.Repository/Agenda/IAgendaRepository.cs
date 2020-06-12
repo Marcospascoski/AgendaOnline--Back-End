@@ -15,7 +15,7 @@ namespace AgendaOnline.Repository
 
          Task<bool> SaveChangesAsync();
          ///EVENTOS
-         Task<Agenda[]> teste();
+         Task<Agenda[]> ObterAgenda(Agenda agenda);
          Task<Agenda[]> ObterTodosAgendamentosPorUsuarioAsync(int usuarioId);
          Task<Agenda> ObterAgendamentoPorIdAsync(int agendamentoId);
          Task<List<User>> ObterTodosAdminsAsync();

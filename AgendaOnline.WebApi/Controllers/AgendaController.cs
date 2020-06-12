@@ -11,6 +11,8 @@ using System.Net.Http.Headers;
 using System.Linq;
 using System;
 using Microsoft.AspNetCore.Authorization;
+using AgendaOnline.WebApi.Services;
+using AgendaOnline.WebApi.Services.Exceptions;
 
 namespace AgendaOnline.WebApi.Controllers
 {
@@ -20,9 +22,11 @@ namespace AgendaOnline.WebApi.Controllers
     {
         private readonly IAgendaRepository _repo;
         private readonly IMapper _mapper;
+        private readonly AgendaService _service;
 
-        public AgendaController(IAgendaRepository repo, IMapper mapper)
+        public AgendaController(IAgendaRepository repo, IMapper mapper, AgendaService service)
         {
+            _service = service;
             _mapper = mapper;
             _repo = repo;
         }
@@ -37,7 +41,7 @@ namespace AgendaOnline.WebApi.Controllers
                 var agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
                 if (agendaAtual.Length <= 0)
                 {
-                    return Ok("nao agendamento");
+                    return Ok(agendaAtual);
                 }
                 //var results = _mapper.Map<AgendaDto>(agendamentoAtual);
 
@@ -55,49 +59,25 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                //Excluir Horários Excluidos da query de horários disponíveis
-                var dataFormatada = data.ToString("dd/MM/yyyy");
-                var dataTipada = DateTime.Parse(dataFormatada);
-                var temEmpresa = await _repo.TemEmpresa(empresa);
-                TimeSpan semDuracao = new TimeSpan(0, 0, 0);
-                TimeSpan duracaoEmpresaNaoEstipulada = new TimeSpan(1, 0, 0);
-                if (temEmpresa)
+                var serviceHorariosDisponiveis = await _service.ListarHorariosDisponiveis(empresa, data);
+                return Ok(serviceHorariosDisponiveis);
+            }
+            catch(BusinessException e)
+            {   
+                switch (e.Message)
                 {
-                    if(data >= DateTime.Now.Date)
-                    {
-                        var horariosDisponiveis = await _repo.ObterHorariosDisponiveis(empresa, dataTipada.Date);
-                        var semDisponibilidade = horariosDisponiveis.FirstOrDefault();
-                        if(semDisponibilidade != duracaoEmpresaNaoEstipulada)
-                        {
-                            if (horariosDisponiveis.Count > 0)
-                            {
-                                return Ok(horariosDisponiveis);
-                            }
-                            else
-                            {
-                                return Ok("indisponível");
-                            }
-                        }
-                        else
-                        {
-                            return Ok("duracaoNaoEstipulada");
-                        }
-                        
-
-                    }
-                    else
-                    {
-                        return Ok("diaVencido");
-                    }
-                    
+                    case "diaVencido": return Ok("diaVencido");
+                    case "indisponível" : return Ok("indisponível");
+                    case "duracaoNaoEstipulada" : return Ok("duracaoNaoEstipulada");
+                    case "empresainvalida" : return Ok("empresainvalida");
+                    default  : return BadRequest();  
                 }
-                return Ok("empresainvalida");
-
             }
-            catch (System.Exception)
+            catch(DbConcurrencyException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
+
         }
 
         [HttpGet("BuscarEmpresas")]
@@ -106,16 +86,20 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var resultadosFiltro = await _repo.FiltrarEmpresas(text);
-                if (resultadosFiltro.Count > 0)
-                {
-                    return Ok(resultadosFiltro);
-                }
-                return Ok("Não encontrado");
+                var resultadosFiltro = await _service.FiltrarEmpresas(text);
+                return Ok(resultadosFiltro);
             }
-            catch (System.Exception)
+            catch (BusinessException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+                if(e.Message.Equals("Não encontrado"))
+                    return Ok("diaVencido");
+
+                return BadRequest();
+               
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
         }
 
@@ -140,25 +124,23 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> ListaDiasAgendados(int AdmId)
         {
+            List<string> diasAgendadosService = new List<string>();
             try
             {
-                var dias = await _repo.ObterDiasAgendadosAsync(AdmId);
-                var diasDto = _mapper.Map<AgendaDto[]>(dias);
-                var results = diasDto.ToArray().Select(x => x.DataHora.Day + "/" + x.DataHora.Month + "/" + x.DataHora.Year).Distinct().ToList();
+                diasAgendadosService = await _service.ListaDiasAgendados(AdmId);
+                return Ok(diasAgendadosService);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("vazio"))
+                    return Ok(diasAgendadosService);
 
-                if (results.Count > 0)
-                {
-                    return Ok(results);
-                }
-                else
-                {
-                    return Ok("vazio");
-                }
+                return BadRequest();
 
             }
-            catch (System.Exception)
+            catch (DbConcurrencyException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
         }
 
@@ -166,76 +148,28 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> AgendarCliente(AgendaDto agendaDto)
         {
-            //Validações
-            var agendamentoModel = _mapper.Map<Agenda>(agendaDto);
-            TimeSpan semDuracao = new TimeSpan(0, 0, 0);
-
-            var clientesAgendados = await _repo.ObterClientesAgendadosMesmaDataAsync(agendamentoModel);
-            var horariosAtendimento = await _repo.ObterHorariosAtendimento(agendamentoModel);
-            var horarioInicioFim = await _repo.ObterInicioFim(agendamentoModel);
-            var agendamentoIndisponivel = await _repo.VerificarIndisponibilidade(agendamentoModel);
-
-            TimeSpan horarioAgendado = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
             try
             {
-                if (agendamentoIndisponivel.ToString() == "")
-                {
-                    if (agendamentoModel.DataHora > DateTime.Now)
-                    {
-                        if (clientesAgendados.Length <= 0)
-                        {
-                            if (horariosAtendimento.Count > 1 && horariosAtendimento[0] != semDuracao)
-                            {
-                                if (horariosAtendimento.Contains(horarioAgendado))
-                                {
-                                    _repo.Add(agendamentoModel);
-                                    if (await _repo.SaveChangesAsync())
-                                    {
-                                        return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
-                                    }
-                                }
-                                else
-                                {
-                                    return Ok("valido");
-                                }
-                            }
-                            // deixar horarioInicioFim.Count == 1 
-                            else if (horarioInicioFim.Count == 1 && horarioInicioFim[0] == semDuracao)
-                            {
-                                
-                                return Ok("horarioImproprio");
-                                
-                            }
-                            else
-                            {
-                                _repo.Add(agendamentoModel);
-                                if (await _repo.SaveChangesAsync())
-                                {
-                                    return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(agendamentoModel));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            return Ok("dataCerta");
-                        }
-                    }
-                    else
-                    {
-                        return Ok("momento");
-                    }
-                }
-                else
-                {
-                    return Ok(agendamentoIndisponivel.ToString());
-                }
-
+                var salvamentoService = await _service.SalvarAlteracoes(agendaDto, "post");
+                return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(salvamentoService));
             }
-            catch (System.Exception ex)
+            catch (BusinessException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de dados Falhou {ex.Message}");
+                switch (e.Message)
+                {
+                    case "empresainvalida": return Ok("empresainvalida");
+                    case "momento": return Ok("momento");
+                    case "dataCerta": return Ok("dataCerta");
+                    case "horarioImproprio": return Ok("horarioImproprio");
+                    case "valido": return Ok("valido");
+                    case "-": return NotFound();
+                    default: return Ok(e.Message);
+                }
             }
-            return BadRequest();
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+            }
 
         }
 
@@ -243,40 +177,16 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> MotorRemocao(int UserId)
         {
+            //Implementar no Service
             try
             {
-                var horaAtual = DateTime.Now.ToString("HH:mm:ss");
-                var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(UserId);
-                var idDataServicosVencidos = _repo.ObterServicosVencidosAsync(UserId);
-
-                if (idDataServicoFinalizado.Length > 0)
-                {
-                    //Chamar Delete
-                    _repo.DeleteRange(idDataServicoFinalizado);
-                    if (await _repo.SaveChangesAsync())
-                    {
-                        return Ok();
-                    }
-                }
-                else if (idDataServicosVencidos.Length > 0)
-                {
-                    //Chamar Delete
-                    _repo.DeleteRange(idDataServicosVencidos);
-                    if (await _repo.SaveChangesAsync())
-                    {
-                        return Ok();
-                    }
-                }
-                else
-                {
-                    return Ok();
-                }
+                _service.MotorRemocao(UserId);
+                return Ok();
             }
-            catch (System.Exception)
+            catch (DbConcurrencyException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
-            return BadRequest();
 
         }
 
@@ -310,28 +220,33 @@ namespace AgendaOnline.WebApi.Controllers
             return BadRequest("Erro ao tentar realizar Upload");
         }
 
-        [HttpPut("{AgendaId}")]
-        public async Task<IActionResult> Put(int AgendaId, AgendaDto model)
+        [HttpPut("AtualizarAgenda")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Put(AgendaDto agendaDto)
         {
             try
             {
-                var agendamento = await _repo.ObterAgendamentoPorIdAsync(AgendaId);
-                if (agendamento == null) return NotFound();
-
-                _mapper.Map(model, agendamento);
-
-                _repo.Update(agendamento);
-
-                if (await _repo.SaveChangesAsync())
+                var salvamentoService = await _service.SalvarAlteracoes(agendaDto, "put");
+                return Created($"/api/agenda/{agendaDto.Id}", _mapper.Map<AgendaDto>(salvamentoService));
+            }
+            catch (BusinessException e)
+            {
+                switch (e.Message)
                 {
-                    return Created($"/api/agenda/{model.Id}", _mapper.Map<AgendaDto>(agendamento));
+                    case "empresainvalida": return Ok("empresainvalida");
+                    case "momento": return Ok("momento");
+                    case "dataCerta": return Ok("dataCerta");
+                    case "horarioImproprio": return Ok("horarioImproprio");
+                    case "valido": return Ok("valido");
+                    case "-": return NotFound();
+                    default: return Ok(e.Message);
                 }
             }
-            catch (System.Exception)
+            catch (DbConcurrencyException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
-            return BadRequest();
+
         }
 
         [HttpDelete("{AgendaId}")]
@@ -339,21 +254,20 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var agendamento = await _repo.ObterAgendamentoPorIdAsync(AgendaId);
-                if (agendamento == null) return NotFound();
-
-                _repo.Delete(agendamento);
-
-                if (await _repo.SaveChangesAsync())
-                {
-                    return Ok();
-                }
+                var result = await _service.DeletarAgendamentos(AgendaId);
+                return Ok();
             }
-            catch (System.Exception)
+            catch (BusinessException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+                if (e.Message.Equals("naoEncontrado"))
+                    return NotFound();
+
+                return BadRequest();
             }
-            return BadRequest();
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+            }
         }
     }
 }
