@@ -146,7 +146,7 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpPost("AgendarCliente")]
         [AllowAnonymous]
-        public async Task<IActionResult> AgendarCliente(AgendaDto agendaDto)
+        public async Task<ActionResult> AgendarCliente(AgendaDto agendaDto)
         {
             try
             {
@@ -175,12 +175,11 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpDelete("MotorRemocao/{UserId}")]
         [AllowAnonymous]
-        public async Task<IActionResult> MotorRemocao(int UserId)
+        public async Task<ActionResult> MotorRemocao(int UserId)
         {
-            //Implementar no Service
             try
             {
-                _service.MotorRemocao(UserId);
+                await _service.MotorRemocao(UserId);
                 return Ok();
             }
             catch (DbConcurrencyException e)

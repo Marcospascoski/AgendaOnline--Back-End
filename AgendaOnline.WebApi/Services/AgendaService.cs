@@ -247,7 +247,7 @@ namespace AgendaOnline.WebApi.Services
 
         }
 
-        public async void MotorRemocao(int UserId)
+        public async Task MotorRemocao(int UserId)
         {
 
             var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(UserId);

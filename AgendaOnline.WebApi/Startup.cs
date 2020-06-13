@@ -46,6 +46,7 @@ namespace AgendaOnline.WebApi
                 );    
             
             services.AddScoped<Services.AgendaService>();
+            services.AddScoped<Services.EventoService>();
 
             IdentityBuilder builder = services.AddIdentityCore<User>(options => 
             {

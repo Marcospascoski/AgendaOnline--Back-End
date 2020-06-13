@@ -11,6 +11,8 @@ using System.Net.Http.Headers;
 using System.Linq;
 using System;
 using Microsoft.AspNetCore.Authorization;
+using AgendaOnline.WebApi.Services;
+using AgendaOnline.WebApi.Services.Exceptions;
 
 namespace AgendaOnline.WebApi.Controllers
 {
@@ -20,29 +22,15 @@ namespace AgendaOnline.WebApi.Controllers
     {
         private readonly IEventoRepository _repo;
         private readonly IMapper _mapper;
+        private readonly EventoService _service;
 
-        public EventoController(IEventoRepository repo, IMapper mapper)
+        public EventoController(IEventoRepository repo, IMapper mapper, EventoService service)
         {
+            _service = service;
             _mapper = mapper;
             _repo = repo;
         }
-
-        [AllowAnonymous]
-        public async Task ExluirEventos(Evento[] eventos)
-        {
-            //Chamar Delete
-            if(eventos.Length == 1)
-            {
-                _repo.Delete(eventos[0]);
-                await _repo.SaveChangesAsync();
-            }
-            else
-            {
-                _repo.DeleteRange(eventos);
-                await _repo.SaveChangesAsync();
-            }
-            
-        }
+        
 
         [HttpGet("ListaDeDatasExcluidas/{admId}")]
         [AllowAnonymous]
@@ -50,23 +38,19 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                TimeSpan diaTodo = new TimeSpan(0, 0, 0);
-                var eventosPorPrestador = await _repo.ObterEventosPorAdmIdAsync(admId);
-                var eventosDatasFormatadas = eventosPorPrestador.Select(x => x.DataHora.TimeOfDay == diaTodo ? x.DataHora.Day+"/"+x.DataHora.Month+"/"+x.DataHora.Year : x.DataHora.ToString()).ToList();
-
-                if (eventosDatasFormatadas.Count > 0)
-                {
-                    return Ok(eventosDatasFormatadas);
-                }
-                else
-                {
-                    return Ok("naoEncontrado");
-                }
-
+                var diasExcluidosService = await _service.ListaDeDatasExcluidas(admId);
+                return Ok(diasExcluidosService);
             }
-            catch (System.Exception e)
+            catch (BusinessException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+                if (e.Message.Equals("naoEncontrado"))
+                    return Ok("naoEncontrado");
+
+                return BadRequest();
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
         }
 
@@ -78,24 +62,21 @@ namespace AgendaOnline.WebApi.Controllers
 
             try
             {
-                eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
-                
-                var eventoModel = _mapper.Map<Evento>(eventoDto);
-                var eventoBase = await _repo.EventoExistente(eventoModel);
-                if(eventoBase.Length == 1)
-                {
-                    await ExluirEventos(eventoBase);
-                    return Ok();
-                }
-                else
-                {
+                var disponibilizarEventoService = await _service.DisponibilizarEvento(eventoDto);
+                await _service.ExcluirEventos(disponibilizarEventoService);
+                return Ok();
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("eventoInexistente"))
                     return Ok("eventoInexistente");
-                }
+
+                return BadRequest();
 
             }
-            catch(Exception e)
+            catch (DbConcurrencyException e)
             {
-                return this.StatusCode(StatusCodes.Status500InternalServerError, e);
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
         }
 
@@ -103,44 +84,25 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> DeclararMotivo(EventoDto eventoDto)
         {
-            eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
-            var eventoModel = _mapper.Map<Evento>(eventoDto);
-
-            var eventoDesatualizado = await _repo.DataHorasUltrapassadas(eventoModel);
-            if(eventoDesatualizado.Length > 0)
-               await ExluirEventos(eventoDesatualizado);
-
-            if (eventoModel.DataHora > DateTime.Now)
+            
+            try
             {
-                var eventoRepetido = await _repo.EventoRepetido(eventoModel);
-                if (eventoRepetido == false)
-                {
-                    try
-                    {
-                        _repo.Add(eventoModel);
-                        if (await _repo.SaveChangesAsync())
-                        {
-                            return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(eventoModel));
-                        }
-                        else
-                        {
-                            return BadRequest();
-                        }
-
-                    }
-                    catch (System.Exception e)
-                    {
-                        return this.StatusCode(StatusCodes.Status500InternalServerError, e);
-                    }
-                }
-                else
-                {
-                    return Ok("indisponível");
-                }
+                var declararacaoMotivoService = await _service.DeclararMotivo(eventoDto);
+                return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(declararacaoMotivoService));
             }
-            else
+            catch (BusinessException e)
             {
-                return Ok("DataHora Ultrapassada");
+                switch (e.Message)
+                {
+                    case "indisponível" : return Ok("indisponível");
+                    case "DataHora Ultrapassada" : return Ok("DataHora Ultrapassada");
+                    default : return BadRequest(); 
+                }
+
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
             
         }
