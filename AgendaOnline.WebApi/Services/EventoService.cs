@@ -108,7 +108,7 @@ namespace AgendaOnline.WebApi.Services
                 throw new BusinessException("DataHora Ultrapassada");
             }
         }
-
+        //Arrumar
         public async Task<List<string>> ListaDeDatasExcluidas(int admId)
         {
             //Arrumar Retorno deste Método
@@ -128,77 +128,109 @@ namespace AgendaOnline.WebApi.Services
                     await ExcluirEventos(eventosUltrapassadosOutroDia);
             }
 
-            var eventosMesmaData = eventosPorPrestador.Select(x => x.DataHora.Date);
+            var eventosMesmaData = eventosPorPrestador.Select(x => x.DataHora.Date).ToList();
             var dataMaisDeUma = eventosMesmaData.GroupBy(x => x)
               .Where(g => g.Count() > 1)
               .Select(y => y.Key)
               .ToList();
 
-            //Lista de Datas com Eventos dia Todo
+            
             List<DateTime> eventosMesmoDia = new List<DateTime>();
             List<DateTime> eventosDistinct = new List<DateTime>();
-            var datasAvançadas = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora).ToArray();
-            List<string> result = new List<string>();
-            if (dataMaisDeUma.Count > 0)
+            List<string> result = new List<string>();   
+            if(dataMaisDeUma.Count == 0)
             {
-                foreach (var data in dataMaisDeUma)
+                var datasSemEventosDiaTodo = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora).ToList();
+                datasSemEventosDiaTodo.RemoveAll(x => x.Date == DateTime.Today && x.TimeOfDay < DateTime.Now.TimeOfDay && x.TimeOfDay != diaTodo);
+
+                datasSemEventosDiaTodo.OrderBy(x => x.Date);
+                datasSemEventosDiaTodo.OrderBy(x => x.TimeOfDay);
+                var datas = datasSemEventosDiaTodo.Where(x => x >= DateTime.Now.Date)
+                            .Select(x => x.TimeOfDay == diaTodo ? x.Day + "/" + x.Month + "/" + x.Year : x.ToString()).ToList();
+
+                foreach (var item in datas)
                 {
-                    var datasMesmoDia = eventosPorPrestador.Where(x => x.DataHora.Date == data && x.DataHora.ToString().Contains("00:00:00")).
-                        Select(x => x.DataHora).ToList();
-                    eventosMesmoDia.Add(datasMesmoDia.FirstOrDefault());
+                    result.Add(item);
+                }
+            }
+            else
+            {
+                var datasSemEventosDiaTodo = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora.Date).ToArray();
+                
+                List<DateTime> datasConvertidas = new List<DateTime>(); 
+                foreach (var item in datasSemEventosDiaTodo)
+                {
+                    datasConvertidas.Add(item);
                 }
 
-                foreach (var item in eventosMesmoDia)
+                var dataRepetida = datasConvertidas.GroupBy(x => x)
+                .Where(g => g.Count() > 1)
+                .Select(y => y.Key)
+                .ToList();
+
+                var dataHoras = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora).ToList();
+                List<DateTime> datasTratadas = new List<DateTime>();
+                foreach (var item in dataRepetida)
                 {
-                    List<DateTime> eventoQuery = eventosPorPrestador.Where(x => x.DataHora.Date != item.Date).Select(x => x.DataHora).ToList();
-                    eventosDistinct.Add(eventoQuery.FirstOrDefault());
+
+                    var data = dataHoras.Where(x => x.Date == item.Date).ToList();
+                    if (data.Any(x => x.TimeOfDay == diaTodo))
+                    {
+                        data.RemoveAll(x => x.TimeOfDay != diaTodo);
+                    }
+                    if(data.Count > 0)
+                    {
+                        foreach (var dt in data)
+                        {
+                            datasTratadas.Add(dt);
+                        }
+                        
+                    }
+
+                }
+                
+                foreach (var item in datasTratadas)
+                {
+                    eventosMesmoDia.Add(item);
                 }
 
-                List<DateTime> eventosDatasFormatadas = new List<DateTime>();
+                var dataHorasDiversas = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora).ToList();
+                List<DateTime> datasRefinadas = new List<DateTime>();
+                foreach (var item in dataRepetida)
+                {
+                    dataHorasDiversas.RemoveAll(x => x.Date == item.Date);
+                }
+                 
+                
+                foreach (var item in dataHorasDiversas)
+                {
+                    eventosDistinct.Add(item);
+                }
 
-                foreach (var item in eventosDistinct)
+                datasTratadas.RemoveAll(x => x.Date == DateTime.Today && x.TimeOfDay < DateTime.Now.TimeOfDay && x.TimeOfDay != diaTodo);
+                dataHorasDiversas.RemoveAll(x => x.Date == DateTime.Today && x.TimeOfDay < DateTime.Now.TimeOfDay && x.TimeOfDay != diaTodo);
+
+                List<DateTime> datasUnidas = new List<DateTime>();
+                foreach (var item in datasTratadas)
                 {
-                    eventosDatasFormatadas.Add(item);
+                    datasUnidas.Add(item);
                 }
-                foreach (var item in eventosMesmoDia)
+                foreach (var item in dataHorasDiversas)
                 {
-                    eventosDatasFormatadas.Add(item);
+                    datasUnidas.Add(item);
                 }
-                var datas = eventosDatasFormatadas.Where(x => x >= DateTime.Now.Date)
-                        .Select(x => x.TimeOfDay == diaTodo ? x.Day + "/" + x.Month + "/" + x.Year : x.ToString());
+
+                datasUnidas.OrderBy(x => x);
+                var datas = datasUnidas.Where(x => x >= DateTime.Now.Date)
+                            .Select(x => x.TimeOfDay == diaTodo ? x.Day + "/" + x.Month + "/" + x.Year : x.ToString()).ToList();
 
 
                 foreach (var item in datas)
                 {
                     result.Add(item.ToString());
                 }
-            }
-            else
-            {
-                var eventosHoje = datasAvançadas.Where(x => x == DateTime.Now.Date && !x.ToString().Contains("00:00:00")).ToList();
-                var datas = datasAvançadas.Where(x => x >= DateTime.Now.Date).ToList();
-                var datasOutroDia = datas.Where(x => x >= DateTime.Now.Date)
-                    .Select(x => x.TimeOfDay == diaTodo ? x.Day + "/" + x.Month + "/" + x.Year : x.ToString()).ToList();
-                var datasUltrapassadosMesmoDia = datas.Where(x => x.ToString().Contains("00:00:00") && x.TimeOfDay > DateTime.Now.TimeOfDay)
-                    .Select(x => x.TimeOfDay == diaTodo ? x.Day + "/" + x.Month + "/" + x.Year : x.ToString()).ToArray();
 
-                if (eventosHoje.Count > 0)
-                {
-                    foreach (var item in datasUltrapassadosMesmoDia)
-                    {
-                        result.Add(item.ToString());
-                    }
-                }
-                else
-                {
-                    foreach (var item in datasOutroDia)
-                    {
-                        result.Add(item.ToString());
-                    }
-                }
-                
             }
-            
 
             if (result.Count > 0)
             {

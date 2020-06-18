@@ -54,7 +54,9 @@ namespace AgendaOnline.Repository
 
         public async Task<Evento[]> DataHorasUltrapassadas(Evento evento)
         {
-            IQueryable<Evento> query = _context.Eventos.Where(e => e.AdmId == evento.AdmId && e.DataHora < DateTime.Now);
+            IQueryable<Evento> query = _context.Eventos.Where(e => e.AdmId == evento.AdmId && e.DataHora.Date < DateTime.Now.Date 
+            || e.AdmId == evento.AdmId && e.DataHora.Date == DateTime.Today && !e.DataHora.TimeOfDay.ToString().Contains("00:00:00") 
+            && e.DataHora.TimeOfDay < DateTime.Now.TimeOfDay);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
