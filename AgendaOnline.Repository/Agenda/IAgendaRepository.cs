@@ -18,7 +18,7 @@ namespace AgendaOnline.Repository
          Task<Agenda[]> ObterAgenda(Agenda agenda);
          Task<Agenda[]> ObterTodosAgendamentosPorUsuarioAsync(int usuarioId);
          Task<Agenda> ObterAgendamentoPorIdAsync(int agendamentoId);
-         Task<List<User>> ObterTodosAdminsAsync();
+         Task<List<User>> ObterTodosUsuariosAsync();
          Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda);
          Task<Agenda[]> ObterDiasAgendadosAsync(int AdmId);
          Task<List<TimeSpan>> ObterHorariosAtendimento(Agenda agenda);

@@ -1,4 +1,5 @@
 ﻿using AgendaOnline.Domain;
+using AgendaOnline.Domain.Identity;
 using AgendaOnline.Repository;
 using AgendaOnline.WebApi.Dtos;
 using AgendaOnline.WebApi.Services.Exceptions;
@@ -122,8 +123,8 @@ namespace AgendaOnline.WebApi.Services
             var agendamentoModel = _mapper.Map<Agenda>(agendaDto);
             var agenda = await _repo.ObterAgenda(agendamentoModel);
             var agendamento = await _repo.ObterAgendamentoPorIdAsync(agenda.Select(x => x.Id).FirstOrDefault());
-            var admins = await _repo.ObterTodosAdminsAsync();
-            var empresa = admins.Where(x => x.Id == agendaDto.AdmId).Select(x => x.Company).FirstOrDefault();
+            var admins = await _repo.ObterTodosUsuariosAsync();
+            var empresa = admins.Where(x => x.Id == agendaDto.UsuarioId).Select(x => x.Company).FirstOrDefault();
             var temEmpresa = await _repo.TemEmpresa(empresa);
             if (agendamento == null && verbo.Equals("put")) throw new BusinessException("-");
             var clientesAgendados = await _repo.ObterClientesAgendadosMesmaDataAsync(agendamentoModel);
@@ -303,6 +304,29 @@ namespace AgendaOnline.WebApi.Services
          
             }
             
+        }
+
+        public async Task<List<User>> ListaDeAdmins()
+        {
+            var usuarios = await _repo.ObterTodosUsuariosAsync();
+            var admins = usuarios.Where(x => x.Role == "Adm").ToList();
+
+            if(admins.Count > 0)
+            {
+                try
+                {
+                    return admins;
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+
+            }
+            else
+            {
+                throw new BusinessException("adm not found");
+            }
         }
 
     }

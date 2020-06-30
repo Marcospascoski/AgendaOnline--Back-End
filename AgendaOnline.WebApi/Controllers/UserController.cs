@@ -38,9 +38,9 @@ namespace AgendaOnline.WebApi.Controllers
             _userManager = userManager;
         }
 
-        [HttpGet("GetUser")]
+        [HttpGet("ListaDeClientes")]
         [Authorize(Roles="User")]
-        public async Task<IActionResult> GetUser()
+        public async Task<IActionResult> ListaDeClientes()
         {
             return Ok(new UserDto());
         }

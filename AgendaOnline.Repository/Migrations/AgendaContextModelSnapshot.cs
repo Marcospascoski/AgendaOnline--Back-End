@@ -25,8 +25,6 @@ namespace AgendaOnline.Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("AdmId");
-
                     b.Property<string>("Celular");
 
                     b.Property<DateTime>("DataHora");
@@ -36,6 +34,8 @@ namespace AgendaOnline.Repository.Migrations
                     b.Property<string>("Email");
 
                     b.Property<string>("Nome");
+
+                    b.Property<int?>("UsuarioId");
 
                     b.HasKey("Id");
 

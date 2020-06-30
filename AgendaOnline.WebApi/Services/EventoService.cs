@@ -111,7 +111,6 @@ namespace AgendaOnline.WebApi.Services
         //Arrumar
         public async Task<List<string>> ListaDeDatasExcluidas(int admId)
         {
-            //Arrumar Retorno deste Método
             TimeSpan diaTodo = new TimeSpan(0, 0, 0);
             var eventosPorPrestador = await _repo.ObterEventosPorAdmIdAsync(admId);
             var eventosUltrapassados = eventosPorPrestador.Where(x => x.DataHora.Date <= DateTime.Now.Date).ToArray();

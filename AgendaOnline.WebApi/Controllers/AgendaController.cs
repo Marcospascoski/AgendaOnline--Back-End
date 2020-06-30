@@ -109,10 +109,41 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var usuarios = await _repo.ObterTodosAdminsAsync();
-                var results = _mapper.Map<AdmDto[]>(usuarios);
-
+                var admins = await _service.ListaDeAdmins();
+                var results = _mapper.Map<AdmDto[]>(admins);
                 return Ok(results);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("user not found"))
+                    return Ok("user not found");
+
+                return BadRequest();
+
+            }
+            catch (System.Exception e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+            }
+        }
+
+        [HttpGet("ListaDeUsuarios")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ListaDeUsuarios()
+        {
+            try
+            {
+                var usuarios = await _repo.ObterTodosUsuariosAsync();
+                var results = _mapper.Map<AdmDto[]>(usuarios);
+                return Ok(results);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("user not found"))
+                    return Ok("user not found");
+
+                return BadRequest();
+
             }
             catch (System.Exception e)
             {
