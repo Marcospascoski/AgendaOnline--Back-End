@@ -81,6 +81,51 @@ namespace AgendaOnline.WebApi.Controllers
             }
         }
 
+        [HttpPut("UpdateAdm")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdateAdm(AdmDto admDto)
+        {
+            try
+            {
+                var senhaAtual = "";
+                var senhaAntiga = "";
+                var admPorId = await _repo.ObterUsuarioPorIdAsync(admDto.Id);
+
+                if (admPorId == null)
+                    return BadRequest("User not found");
+
+                senhaAntiga = admPorId.Password;
+                senhaAtual = admDto.Password;
+
+                var admModel = _mapper.Map(admDto, admPorId);
+                var atualizaDados = await _userManager.UpdateAsync(admModel);
+                var user = await _userManager.GetUserAsync(User);
+                var admToReturn = _mapper.Map<UserDto>(admModel);
+
+                if (senhaAntiga.Equals(senhaAtual))
+                {
+                    if (!atualizaDados.Succeeded)
+                        return BadRequest("dados");
+
+                    return Created("GetUser", admToReturn);
+                }
+                else
+                {
+                    var atualizaSenha = await _userManager.ChangePasswordAsync(admModel, senhaAntiga, senhaAtual);
+                    await _signInManager.RefreshSignInAsync(admModel);
+                    if (!atualizaSenha.Succeeded)
+                        return BadRequest("senha");
+
+                    return Created("GetUser", admToReturn);
+                }
+
+            }
+            catch (System.Exception ex)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
+            }
+        }
+
         [HttpPost("Login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(User userLogin)

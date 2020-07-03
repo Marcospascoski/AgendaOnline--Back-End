@@ -43,7 +43,7 @@ namespace AgendaOnline.WebApi.Controllers
         }
 
         [HttpGet("ListaDeClientes")]
-        [Authorize(Roles="User")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> ListaDeClientes()
         {
             return Ok(new UserDto());
@@ -60,7 +60,7 @@ namespace AgendaOnline.WebApi.Controllers
                 var result = await _userManager.CreateAsync(user, userDto.Password);
                 await _userManager.AddToRoleAsync(user, user.Role);
                 var userToReturn = _mapper.Map<UserDto>(user);
-                if(result.Succeeded)
+                if (result.Succeeded)
                 {
                     return Created("GetUser", userToReturn);
                 }
@@ -81,13 +81,13 @@ namespace AgendaOnline.WebApi.Controllers
                 var senhaAtual = "";
                 var senhaAntiga = "";
                 var usuarioPorId = await _repo.ObterUsuarioPorIdAsync(usuarioDto.Id);
-                
-                if(usuarioPorId == null)
+
+                if (usuarioPorId == null)
                     return BadRequest("User not found");
 
                 senhaAntiga = usuarioPorId.Password;
                 senhaAtual = usuarioDto.Password;
-                
+
                 var usuarioModel = _mapper.Map(usuarioDto, usuarioPorId);
                 var atualizaDados = await _userManager.UpdateAsync(usuarioModel);
                 var user = await _userManager.GetUserAsync(User);
@@ -125,7 +125,7 @@ namespace AgendaOnline.WebApi.Controllers
             {
                 var user = await _userManager.FindByNameAsync(userLogin.UserName);
                 var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
-                
+
                 if (!result.Succeeded)
                     return NotFound(new { message = "Usu�rio ou senha incorretas" });
 
@@ -133,7 +133,7 @@ namespace AgendaOnline.WebApi.Controllers
                 {
                     var role = await _userManager.GetRolesAsync(user);
                     IdentityOptions _options = new IdentityOptions();
-                    
+
                     var key = new SymmetricSecurityKey(Encoding.ASCII
                     .GetBytes(_config.GetSection("AppSettings:Token").Value));
 
@@ -150,14 +150,40 @@ namespace AgendaOnline.WebApi.Controllers
                     var tokenHandler = new JwtSecurityTokenHandler();
                     var securityToken = tokenHandler.CreateToken(tokenDescriptor);
                     var token = tokenHandler.WriteToken(securityToken);
-                    return Ok(new {token});
+                    return Ok(new { token });
                 }
                 return Unauthorized();
             }
             catch (System.Exception ex)
             {
-                
-               return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
+
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
+            }
+        }
+
+        [HttpDelete("DeletarUsuario/{UsuarioId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> DeletarUsuario(int UsuarioId)
+        {
+            try
+            {
+                var usuario = await _repo.ObterUsuarioPorIdAsync(UsuarioId);
+
+                if (usuario == null)
+                {
+                    return Ok("user not found");
+                }
+                else
+                {
+                    _repo.Delete(usuario);
+                    await _repo.SaveChangesAsync();
+                    return Ok();
+                }
+            }
+            catch (System.Exception ex)
+            {
+
+                return this.StatusCode(StatusCodes.Status500InternalServerError, $"Banco de Dados Falhou {ex.Message}");
             }
         }
     }
