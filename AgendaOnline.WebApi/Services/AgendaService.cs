@@ -329,5 +329,28 @@ namespace AgendaOnline.WebApi.Services
             }
         }
 
+        public async Task<List<User>> ListaDeClientes()
+        {
+            var usuarios = await _repo.ObterTodosUsuariosAsync();
+            var clientes = usuarios.Where(x => x.Role == "User").ToList();
+
+            if(clientes.Count > 0)
+            {
+                try
+                {
+                    return clientes;
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+
+            }
+            else
+            {
+                throw new BusinessException("client not found");
+            }
+        }
+
     }
 }

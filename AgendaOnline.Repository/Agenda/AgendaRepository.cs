@@ -77,6 +77,13 @@ namespace AgendaOnline.Repository
             return query;
         }
 
+        public async Task<User> ObterUsuarioPorIdAsync(int usuarioId)
+        {
+            List<User> query = await _context.Users.Where(x => x.Id == usuarioId).OrderByDescending(x => x.Id).ToListAsync();
+
+            return query.FirstOrDefault();
+        }
+
         public async Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda)
         {
             IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && a.UsuarioId == agenda.UsuarioId);

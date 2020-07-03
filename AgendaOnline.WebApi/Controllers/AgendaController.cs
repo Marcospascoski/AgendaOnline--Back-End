@@ -103,9 +103,9 @@ namespace AgendaOnline.WebApi.Controllers
             }
         }
 
-        [HttpGet("ListaAdminsPorAgenda")]
+        [HttpGet("ListaDeAdms")]
         [AllowAnonymous]
-        public async Task<ActionResult> ListaAdminsPorAgenda()
+        public async Task<ActionResult> ListaDeAdms()
         {
             try
             {
@@ -115,8 +115,32 @@ namespace AgendaOnline.WebApi.Controllers
             }
             catch (BusinessException e)
             {
-                if (e.Message.Equals("user not found"))
-                    return Ok("user not found");
+                if (e.Message.Equals("adm not found"))
+                    return Ok("adm not found");
+
+                return BadRequest();
+
+            }
+            catch (System.Exception e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+            }
+        }
+
+        [HttpGet("ListaDeClientes")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ListaDeClientes()
+        {
+            try
+            {
+                var clientes = await _service.ListaDeClientes();
+                var results = _mapper.Map<UserDto[]>(clientes);
+                return Ok(results);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("client not found"))
+                    return Ok("client not found");
 
                 return BadRequest();
 

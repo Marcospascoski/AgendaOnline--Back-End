@@ -49,9 +49,9 @@ namespace AgendaOnline.WebApi.Controllers
             return Ok(new AdmDto());
         }
 
-        [HttpPost("registerAdm")]
+        [HttpPost("RegisterAdm")]
         [AllowAnonymous]
-        public async Task<IActionResult> registerAdm(AdmDto admDto)
+        public async Task<IActionResult> RegisterAdm(AdmDto admDto)
         {
             try
             {
