@@ -28,5 +28,7 @@ namespace AgendaOnline.WebApi.Dtos
         public TimeSpan Duracao { get; set; }
 
         public int? UsuarioId { get; set; }
+
+        public int? AdmId { get; set; }
     }
 }

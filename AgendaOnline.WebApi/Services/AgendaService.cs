@@ -124,7 +124,7 @@ namespace AgendaOnline.WebApi.Services
             var agenda = await _repo.ObterAgenda(agendamentoModel);
             var agendamento = await _repo.ObterAgendamentoPorIdAsync(agenda.Select(x => x.Id).FirstOrDefault());
             var admins = await _repo.ObterTodosUsuariosAsync();
-            var empresa = admins.Where(x => x.Id == agendaDto.UsuarioId).Select(x => x.Company).FirstOrDefault();
+            var empresa = admins.Where(x => x.Id == agendaDto.UsuarioId || x.Id == agendaDto.AdmId).Select(x => x.Company).FirstOrDefault();
             var temEmpresa = await _repo.TemEmpresa(empresa);
             if (agendamento == null && verbo.Equals("put")) throw new BusinessException("-");
             var clientesAgendados = await _repo.ObterClientesAgendadosMesmaDataAsync(agendamentoModel);
