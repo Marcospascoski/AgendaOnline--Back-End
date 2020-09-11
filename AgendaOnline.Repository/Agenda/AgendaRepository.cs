@@ -46,28 +46,55 @@ namespace AgendaOnline.Repository
 
         public async Task<Agenda[]> ObterAgenda(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == agenda.AdmId && x.DataHora.Date == agenda.DataHora.Date);
+            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == agenda.AdmId || x.UsuarioId == agenda.UsuarioId && x.DataHora.Date == agenda.DataHora.Date);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
         }
 
-        public async Task<Agenda[]> ObterTodosAgendamentosPorUsuarioAsync(int UserId)
+        public async Task<List<Agenda>> ObterTodosAgendamentosPorUsuarioAsync(int UserId)
         {
-            var duracaoAdm = _context.Users.Where(x => x.Id == UserId).Select(x => x.Duracao).FirstOrDefault();
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
-            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == UserId);
-            query = query.AsNoTracking();
+            List<Agenda> query = await _context.Agendas.Where(x => x.AdmId == UserId || x.UsuarioId == UserId).ToListAsync();
 
-            for (int i = 0; i < query.ToArray().Length; i++)
+            User adm;
+            TimeSpan duracaoAdm = new TimeSpan(0, 0, 0);
+            foreach (var agendamento in query)
             {
-                if(query.ToArray()[i].Duracao == semDuracao)
+                int? idAdm = agendamento.AdmId;
+                if (agendamento.Duracao == semDuracao)
                 {
-                    query.ToArray()[i].Duracao = duracaoAdm;
+                    adm = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                    duracaoAdm = adm.Duracao;
+                    agendamento.Duracao = duracaoAdm;
                 }
             }
 
-            return await query.ToArrayAsync();
+            string endereco = string.Empty;
+            foreach (var agendamento in query)
+            {
+                int? idAdm = agendamento.AdmId;
+                adm = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                endereco = adm.Endereco;
+                if (!String.IsNullOrWhiteSpace(endereco.Trim()))
+                {
+                    agendamento.Endereco = endereco;
+                }
+            }
+
+            string celular = string.Empty;
+            foreach (var agendamento in query)
+            {
+                int? idAdm = agendamento.AdmId;
+                adm = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                celular = adm.Celular;
+                if (!String.IsNullOrWhiteSpace(celular.Trim()))
+                {
+                    agendamento.CelularAdm = celular;
+                }
+            }
+
+            return query;
         }
 
         public async Task<List<User>> ObterTodosUsuariosAsync()
@@ -86,7 +113,7 @@ namespace AgendaOnline.Repository
 
         public async Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && a.AdmId == agenda.AdmId);
+            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && (a.AdmId == agenda.AdmId || a.UsuarioId == agenda.UsuarioId));
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
@@ -94,7 +121,7 @@ namespace AgendaOnline.Repository
         
         public async Task<Agenda[]> ObterDiasAgendadosAsync(int UsuarioId)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == UsuarioId).OrderBy(x => x.DataHora);
+            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == UsuarioId || x.UsuarioId == UsuarioId).OrderBy(x => x.DataHora);
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
@@ -203,6 +230,7 @@ namespace AgendaOnline.Repository
                 }
 
                 horarios.RemoveAll(x => x >= almocoIni && x < almocoFim);
+                horarios.Remove(fechamento);
             }
             
             return horarios;
@@ -277,7 +305,7 @@ namespace AgendaOnline.Repository
         {
             TimeSpan semDuracao = new TimeSpan(0,0,0);
 
-            var agendamentos = _context.Agendas.Where(x => x.AdmId == UserId).ToList();
+            var agendamentos = _context.Agendas.Where(x => x.AdmId == UserId || x.UsuarioId == UserId).ToList();
             List<Agenda> agendamentoList = new List<Agenda>();
             User adm;
             foreach (var agenda in agendamentos)
@@ -327,7 +355,7 @@ namespace AgendaOnline.Repository
 
         public Agenda[] ObterServicosVencidosAsync(int UserId)
         {
-            Agenda[] query = _context.Agendas.Where(a => a.AdmId == UserId && a.DataHora.Date < DateTime.Now.Date).ToArray();
+            Agenda[] query = _context.Agendas.Where(a => a.AdmId == UserId || a.UsuarioId == UserId && a.DataHora.Date < DateTime.Now.Date).ToArray();
 
             return query;
         }
@@ -348,6 +376,8 @@ namespace AgendaOnline.Repository
             return await query.ToArrayAsync();
         }
 
+
+
         public async Task<bool> TemEmpresa(string empresa)
         {
             var lResult = true;
@@ -358,11 +388,49 @@ namespace AgendaOnline.Repository
             return lResult;
         }
 
-        public async Task<List<string>> FiltrarEmpresas(string textEmpresa)
+        public async Task<List<string>> FiltrarEmpresas(string textEmpresa, string segmento, string cidade)
         {
-            var todasEmpresas = _context.Usuarios.Where(x => x.Company.Contains(textEmpresa)).Select(x => x.Company).ToList();
+            var todasEmpresas = _context.Usuarios.Where(x => x.Role == "Adm");
+            if (segmento != "null" && segmento != "" && segmento != null)
+            {
+                todasEmpresas = todasEmpresas.Where(x => x.MarketSegment.ToUpper().Trim() == segmento.ToUpper().Trim());
+            }
+            if (cidade != "null" && cidade != "" && cidade != null)
+            {
+                todasEmpresas = todasEmpresas.Where(x => x.Cidade.ToUpper().Trim() == cidade.ToUpper().Trim());
+            }
+            todasEmpresas = todasEmpresas.Where(x => x.Company.ToUpper().Trim().Contains(textEmpresa.ToUpper().Trim()));
 
-            return todasEmpresas;
+            return todasEmpresas.Select(x => x.Company).Distinct().ToList();
+        }
+
+        public async Task<List<string>> FiltrarCidades(string textCidade, string textSegmento)
+        {
+            var todasCidades = _context.Usuarios.Where(x => x.Role == "Adm");
+            if (textSegmento != "null" && textSegmento != "" && textSegmento != null && textSegmento != "undefined")
+            {
+                todasCidades = todasCidades.Where(x => x.MarketSegment.ToUpper().Trim() == textSegmento.ToUpper().Trim());
+            }
+            todasCidades = todasCidades.Where(x => x.Cidade.ToUpper().Trim().Contains(textCidade.ToUpper().Trim()));
+            return todasCidades.Select(x => x.Cidade).Distinct().ToList();
+        }
+
+        public async Task<List<string>> FiltrarSegmentos(string textSegmento, string textCidade)
+        {
+            var todosSegmentos = _context.Usuarios.Where(x => x.Role == "Adm");
+            if (textCidade != "null" && textCidade != "" && textCidade != null && textCidade != "undefined")
+            {
+                todosSegmentos = todosSegmentos.Where(x => x.Cidade.ToUpper().Trim() == textCidade.ToUpper().Trim());
+            }
+            todosSegmentos = todosSegmentos.Where(x => x.MarketSegment.ToUpper().Trim().Contains(textSegmento.ToUpper().Trim()));
+            return todosSegmentos.Select(x => x.MarketSegment).Distinct().ToList();
+        }
+
+        public async Task<List<string>> FiltrarClientes(string textClientes)
+        {
+            var todosClientes = _context.Usuarios.Where(x => x.UserName.Contains(textClientes) && x.Role == "User").Select(x => x.UserName).Distinct().ToList();
+
+            return todosClientes;
         }
     }
 }

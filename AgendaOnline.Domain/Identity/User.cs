@@ -24,6 +24,7 @@ namespace AgendaOnline.Domain.Identity
         public TimeSpan Fechamento { get; set; }
         public TimeSpan Duracao { get; set; }
         public string Celular { get; set; }
+        public string Endereco { get; set; }    
         public List<UserRole> UserRoles { get; set; }
         public virtual Agenda Agenda { get;}
         public string Role { get; set; }

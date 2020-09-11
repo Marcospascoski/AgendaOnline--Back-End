@@ -12,13 +12,23 @@ namespace AgendaOnline.Domain
 
         public string Nome { get; set; }
 
-        public string Email { get; set; }
-
         public DateTime DataHora { get; set; }
 
         public TimeSpan Duracao { get; set; }
+
+        public string Segmento { get; set; }
+
+        public string Empresa { get; set; }
+
+        public string Cidade { get; set; }
+
+        public string CelularCliente { get; set; }
+
+        public string CelularAdm { get; set; }
         
-        public string Celular { get; set; }
+        public string Observacao { get; set; }
+        
+        public string Endereco { get; set; }
 
         public int? UsuarioId { get; set; }
 

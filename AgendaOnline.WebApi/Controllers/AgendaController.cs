@@ -39,7 +39,7 @@ namespace AgendaOnline.WebApi.Controllers
             try
             {
                 var agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
-                if (agendaAtual.Length <= 0)
+                if (agendaAtual.Count <= 0)
                 {
                     return Ok(agendaAtual);
                 }
@@ -82,11 +82,11 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpGet("BuscarEmpresas")]
         [AllowAnonymous]
-        public async Task<ActionResult> BuscarEmpresas(string text)
+        public async Task<ActionResult> BuscarEmpresas(string text, string segmento, string cidade)
         {
             try
             {
-                var resultadosFiltro = await _service.FiltrarEmpresas(text);
+                var resultadosFiltro = await _service.FiltrarEmpresas(text, segmento, cidade);
                 return Ok(resultadosFiltro);
             }
             catch (BusinessException e)
@@ -96,6 +96,75 @@ namespace AgendaOnline.WebApi.Controllers
 
                 return BadRequest();
                
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+            }
+        }
+
+        [HttpGet("BuscarCidades")]
+        [AllowAnonymous]
+        public async Task<ActionResult> BuscarCidades(string text, string segmento)
+        {
+            try
+            {
+                var resultadosFiltro = await _service.FiltrarCidades(text, segmento);
+                return Ok(resultadosFiltro);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("Não encontrado"))
+                    return Ok("diaVencido");
+
+                return BadRequest();
+
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+            }
+        }
+
+        [HttpGet("BuscarSegmentos")]
+        [AllowAnonymous]
+        public async Task<ActionResult> BuscarSegmentos(string text, string cidade)
+        {
+            try
+            {
+                var resultadosFiltro = await _service.FiltrarSegmentos(text, cidade);
+                return Ok(resultadosFiltro);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("Não encontrado"))
+                    return Ok("diaVencido");
+
+                return BadRequest();
+
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+            }
+        }
+
+        [HttpGet("BuscarClientes")]
+        [AllowAnonymous]
+        public async Task<ActionResult> BuscarClientes(string text)
+        {
+            try
+            {
+                var resultadosFiltro = await _service.FiltrarClientes(text);
+                return Ok(resultadosFiltro);
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("Não encontrado"))
+                    return Ok("diaVencido");
+
+                return BadRequest();
+
             }
             catch (DbConcurrencyException e)
             {
@@ -304,6 +373,7 @@ namespace AgendaOnline.WebApi.Controllers
         }
 
         [HttpDelete("{AgendaId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Delete(int AgendaId)
         {
             try

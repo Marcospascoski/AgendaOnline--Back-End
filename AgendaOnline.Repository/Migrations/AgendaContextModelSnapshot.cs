@@ -27,15 +27,25 @@ namespace AgendaOnline.Repository.Migrations
 
                     b.Property<int?>("AdmId");
 
-                    b.Property<string>("Celular");
+                    b.Property<string>("CelularAdm");
+
+                    b.Property<string>("CelularCliente");
+
+                    b.Property<string>("Cidade");
 
                     b.Property<DateTime>("DataHora");
 
                     b.Property<TimeSpan>("Duracao");
 
-                    b.Property<string>("Email");
+                    b.Property<string>("Empresa");
+
+                    b.Property<string>("Endereco");
 
                     b.Property<string>("Nome");
+
+                    b.Property<string>("Observacao");
+
+                    b.Property<string>("Segmento");
 
                     b.Property<int?>("UsuarioId");
 
@@ -115,6 +125,8 @@ namespace AgendaOnline.Repository.Migrations
                         .HasMaxLength(256);
 
                     b.Property<bool>("EmailConfirmed");
+
+                    b.Property<string>("Endereco");
 
                     b.Property<int>("Fds");
 

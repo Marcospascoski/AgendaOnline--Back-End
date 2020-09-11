@@ -89,6 +89,7 @@ namespace AgendaOnline.WebApi.Services
                 {
                     try
                     {
+
                         _repo.Add(eventoModel);
                         await _repo.SaveChangesAsync();
                         return eventoModel;

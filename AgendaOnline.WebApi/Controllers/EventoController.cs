@@ -23,9 +23,11 @@ namespace AgendaOnline.WebApi.Controllers
         private readonly IEventoRepository _repo;
         private readonly IMapper _mapper;
         private readonly EventoService _service;
+        private readonly AgendaService _serviceAgenda;
 
-        public EventoController(IEventoRepository repo, IMapper mapper, EventoService service)
+        public EventoController(IEventoRepository repo, IMapper mapper, EventoService service, AgendaService serviceAgenda)
         {
+            _serviceAgenda = serviceAgenda;
             _service = service;
             _mapper = mapper;
             _repo = repo;
@@ -59,10 +61,15 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> DisponibilizarEvento(EventoDto eventoDto)
         {
-
+            DateTime data = eventoDto.DataHora;
             try
             {
                 var disponibilizarEventoService = await _service.DisponibilizarEvento(eventoDto);
+                if (disponibilizarEventoService != null)
+                {
+                    eventoDto.DataHora = data;
+                    var enviarMotivoEmAgendamento = await _serviceAgenda.EnviarMotivo(eventoDto, "disponibilizar");
+                }
                 await _service.ExcluirEventos(disponibilizarEventoService);
                 return Ok();
             }
@@ -84,16 +91,23 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> DeclararMotivo(EventoDto eventoDto)
         {
-            
+            DateTime data = eventoDto.DataHora;
             try
             {
                 var declararacaoMotivoService = await _service.DeclararMotivo(eventoDto);
+                if(declararacaoMotivoService != null)
+                {
+                    eventoDto.DataHora = data;
+                    var enviarMotivoEmAgendamento = await _serviceAgenda.EnviarMotivo(eventoDto, "indisponibilizar");
+                }
+                    
                 return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(declararacaoMotivoService));
             }
             catch (BusinessException e)
             {
                 switch (e.Message)
                 {
+                    case "naoEncontrado": return Ok("naoEncontrado");
                     case "indisponível" : return Ok("indisponível");
                     case "DataHora Ultrapassada" : return Ok("DataHora Ultrapassada");
                     default : return BadRequest(); 

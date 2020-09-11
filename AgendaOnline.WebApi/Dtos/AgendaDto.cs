@@ -14,18 +14,26 @@ namespace AgendaOnline.WebApi.Dtos
         [StringLength (100, MinimumLength=10, ErrorMessage="Preencha seu nome completo")]
         public string Nome { get; set; }
         
-        [EmailAddress]
-        [Required (ErrorMessage="Campo Email é obrigatório")]
-        public string Email { get; set; }
-
         [Required (ErrorMessage="Campo Data é obrigatório")]
         public DateTime DataHora { get; set; }
 
         [Phone]
         [Required (ErrorMessage="Campo Celular é obrigatório")]
-        public string Celular { get; set; }
+        public string CelularCliente { get; set; }
+
+        public string CelularAdm { get; set; }
+
+        public string Observacao { get; set; }
+        
+        public string Endereco { get; set; }
 
         public TimeSpan Duracao { get; set; }
+
+        public string Segmento { get; set; }
+
+        public string Empresa { get; set; }
+
+        public string Cidade { get; set; }
 
         public int? UsuarioId { get; set; }
 

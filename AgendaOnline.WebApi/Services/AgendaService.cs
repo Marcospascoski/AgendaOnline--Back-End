@@ -72,9 +72,69 @@ namespace AgendaOnline.WebApi.Services
 
         }
 
-        public async Task<List<string>> FiltrarEmpresas(string text)
+        public async Task<List<string>> FiltrarEmpresas(string text, string segmento, string cidade)
         {
-            var resultadosFiltro = await _repo.FiltrarEmpresas(text);
+            var resultadosFiltro = await _repo.FiltrarEmpresas(text, segmento, cidade);
+            if (resultadosFiltro.Count > 0)
+            {
+                try
+                {
+                    return resultadosFiltro;
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+            }
+            else
+            {
+                throw new BusinessException("Não encontrado");
+            }
+        }
+
+        public async Task<List<string>> FiltrarCidades(string text, string segmento)
+        {
+            var resultadosFiltro = await _repo.FiltrarCidades(text, segmento);
+            if (resultadosFiltro.Count > 0)
+            {
+                try
+                {
+                    return resultadosFiltro;
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+            }
+            else
+            {
+                throw new BusinessException("Não encontrado");
+            }
+        }
+
+        public async Task<List<string>> FiltrarSegmentos(string text, string cidade)
+        {
+            var resultadosFiltro = await _repo.FiltrarSegmentos(text, cidade);
+            if (resultadosFiltro.Count > 0)
+            {
+                try
+                {
+                    return resultadosFiltro;
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+            }
+            else
+            {
+                throw new BusinessException("Não encontrado");
+            }
+        }
+
+        public async Task<List<string>> FiltrarClientes(string text)
+        {
+            var resultadosFiltro = await _repo.FiltrarClientes(text);
             if (resultadosFiltro.Count > 0)
             {
                 try
@@ -131,7 +191,7 @@ namespace AgendaOnline.WebApi.Services
             var horariosAtendimento = await _repo.ObterHorariosAtendimento(agendamentoModel);
             var horarioInicioFim = await _repo.ObterInicioFim(agendamentoModel);
             var agendamentoIndisponivel = await _repo.VerificarIndisponibilidade(agendamentoModel);
-
+            
             TimeSpan horarioAgendado = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
 
             if (temEmpresa)
@@ -350,6 +410,56 @@ namespace AgendaOnline.WebApi.Services
             {
                 throw new BusinessException("client not found");
             }
+        }
+
+        public async Task<string> EnviarMotivo(EventoDto eventoDto, string decisao)
+        {
+            TimeSpan diaTodo = new TimeSpan(0, 0, 0);
+            eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
+            var eventoModel = _mapper.Map<Evento>(eventoDto);
+
+            var agendamentoPorUsuario = await _repo.ObterTodosAgendamentosPorUsuarioAsync(eventoModel.AdmId);
+            if (agendamentoPorUsuario.Count > 0)
+            {
+
+                try
+                {
+                    //encontrar o agendamento correto pelo AdmId e DataHora.
+                    if (eventoModel.DataHora.TimeOfDay == diaTodo)
+                    {
+                        agendamentoPorUsuario = agendamentoPorUsuario.Where(x => x.DataHora.Date == eventoModel.DataHora.Date).ToList();
+                    }
+                    else
+                    {
+                        agendamentoPorUsuario = agendamentoPorUsuario.Where(x => x.DataHora == eventoModel.DataHora).ToList();
+                    }
+                    if (agendamentoPorUsuario.Count > 0)
+                    {
+                        if (decisao.Equals("indisponibilizar"))
+                        {
+                            agendamentoPorUsuario.FirstOrDefault().Observacao = eventoModel.Motivo;
+                        }
+                        else
+                        {
+                            agendamentoPorUsuario.FirstOrDefault().Observacao = "Agendamento Disponível Novamente";
+                        }
+                        _repo.Update(agendamentoPorUsuario.FirstOrDefault());
+                        await _repo.SaveChangesAsync();
+                        return await Task.FromResult("Atualizado com sucesso");
+                    }
+                    else
+                    {
+                        return "não necessário";
+                    }
+
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+            }
+            return "";
+
         }
 
     }
