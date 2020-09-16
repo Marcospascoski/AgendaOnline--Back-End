@@ -38,7 +38,7 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
+                List<Agenda> agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
                 if (agendaAtual.Count <= 0)
                 {
                     return Ok(agendaAtual);

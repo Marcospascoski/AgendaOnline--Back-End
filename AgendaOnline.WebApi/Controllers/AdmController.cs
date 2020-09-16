@@ -55,6 +55,7 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
+                var verificadorRole = _repo.VerificarExistenciaRoles();
                 var admUser = _mapper.Map<User>(admDto);
                 var empresaCadastrada = await _repo.EmpresaCadastradaAsync(admUser);
                 

@@ -55,6 +55,7 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
+                var verificadorRole = _repo.VerificarExistenciaRoles();
                 var user = _mapper.Map<User>(userDto);
                 user.Role = "User";
                 var result = await _userManager.CreateAsync(user, userDto.Password);
