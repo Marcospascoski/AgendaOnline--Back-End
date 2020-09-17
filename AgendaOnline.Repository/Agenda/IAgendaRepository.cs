@@ -34,7 +34,7 @@ namespace AgendaOnline.Repository
         Task<List<string>> FiltrarSegmentos(string textSegmento, string cidade);
         Task<List<string>> FiltrarCidades(string textCidade, string segmento);
         Task<List<string>> FiltrarClientes(string textClientes);
-        Task<List<Role>> VerificarExistenciaRoles();
+        Task VerificarExistenciaRoles();
 
     }
 }

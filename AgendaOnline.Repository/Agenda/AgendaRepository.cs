@@ -433,20 +433,26 @@ namespace AgendaOnline.Repository
             return todosClientes;
         }
 
-        public async Task<List<Role>> VerificarExistenciaRoles()
+        public async Task VerificarExistenciaRoles()
         {
-            var roles = await _context.Roles.ToListAsync();
-            
-            if(!roles.Any(x => x.Name.Equals("Adm") && x.Name.Equals("User")))
-            {
-                Role roleAdm = new Role();
-                roleAdm.Name = "Adm";
+            var roles = await _context.Roles.Select(x => x.Name).ToListAsync();
+
+            var contemRoles = roles.Any(x => x == "User" || x == "Adm");
+
+            if (!contemRoles) {
                 Role roleUser = new Role();
                 roleUser.Name = "User";
+                roleUser.NormalizedName = "User";
+                Role roleAdm = new Role();
+                roleAdm.Name = "Adm";
+                roleAdm.NormalizedName = "Adm";
+                Add(roleAdm);
+                await SaveChangesAsync();
                 Add(roleUser);
                 await SaveChangesAsync();
+
             }
-            return roles;
+
         }
     }
 }
