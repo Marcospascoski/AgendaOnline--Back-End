@@ -92,7 +92,7 @@ namespace AgendaOnline.WebApi.Controllers
             catch (BusinessException e)
             {
                 if(e.Message.Equals("Não encontrado"))
-                    return Ok("diaVencido");
+                    return Ok("NotFound");
 
                 return BadRequest();
                
@@ -115,7 +115,7 @@ namespace AgendaOnline.WebApi.Controllers
             catch (BusinessException e)
             {
                 if (e.Message.Equals("Não encontrado"))
-                    return Ok("diaVencido");
+                    return Ok("NotFound");
 
                 return BadRequest();
 
@@ -138,7 +138,7 @@ namespace AgendaOnline.WebApi.Controllers
             catch (BusinessException e)
             {
                 if (e.Message.Equals("Não encontrado"))
-                    return Ok("diaVencido");
+                    return Ok("NotFound");
 
                 return BadRequest();
 
@@ -161,7 +161,7 @@ namespace AgendaOnline.WebApi.Controllers
             catch (BusinessException e)
             {
                 if (e.Message.Equals("Não encontrado"))
-                    return Ok("diaVencido");
+                    return Ok("NotFound");
 
                 return BadRequest();
 

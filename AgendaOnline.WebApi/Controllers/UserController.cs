@@ -57,15 +57,24 @@ namespace AgendaOnline.WebApi.Controllers
             {
                 await _repo.VerificarExistenciaRoles();
                 var user = _mapper.Map<User>(userDto);
-                user.Role = "User";
-                var result = await _userManager.CreateAsync(user, userDto.Password);
-                await _userManager.AddToRoleAsync(user, user.Role);
-                var userToReturn = _mapper.Map<UserDto>(user);
-                if (result.Succeeded)
+                var clienteCadastrado = await _repo.ClienteCadastradoAsync(user);
+
+                if (clienteCadastrado == null)
                 {
-                    return Created("GetUser", userToReturn);
+                    return Ok("Cliente já cadastrada");
                 }
-                return BadRequest(result.Errors);
+                else
+                {
+                    user.Role = "User";
+                    var result = await _userManager.CreateAsync(user, userDto.Password);
+                    await _userManager.AddToRoleAsync(user, user.Role);
+                    var userToReturn = _mapper.Map<UserDto>(user);
+                    if (result.Succeeded)
+                    {
+                        return Created("GetUser", userToReturn);
+                    }
+                    return BadRequest(result.Errors);
+                }
             }
             catch (System.Exception ex)
             {
@@ -84,7 +93,7 @@ namespace AgendaOnline.WebApi.Controllers
                 var usuarioPorId = await _repo.ObterUsuarioPorIdAsync(usuarioDto.Id);
 
                 if (usuarioPorId == null)
-                    return BadRequest("User not found");
+                    return Ok("User not found");
 
                 senhaAntiga = usuarioPorId.Password;
                 senhaAtual = usuarioDto.Password;
@@ -128,7 +137,7 @@ namespace AgendaOnline.WebApi.Controllers
                 var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
 
                 if (!result.Succeeded)
-                    return NotFound(new { message = "Usu�rio ou senha incorretas" });
+                    return NotFound(new { message = "Usuario ou senha incorretas" });
 
                 if (result.Succeeded)
                 {

@@ -376,7 +376,13 @@ namespace AgendaOnline.Repository
             return await query.ToArrayAsync();
         }
 
+        public async Task<User[]> ClienteCadastradoAsync(User user)
+        {
+            IQueryable<User> query = _context.Users.Where(x => x.UserName == user.UserName);
+            query = query.AsNoTracking();
 
+            return await query.ToArrayAsync();
+        }
 
         public async Task<bool> TemEmpresa(string empresa)
         {

@@ -93,7 +93,7 @@ namespace AgendaOnline.WebApi.Controllers
                 var admPorId = await _repo.ObterUsuarioPorIdAsync(admDto.Id);
 
                 if (admPorId == null)
-                    return BadRequest("User not found");
+                    return Ok("User not found");
 
                 senhaAntiga = admPorId.Password;
                 senhaAtual = admDto.Password;
@@ -137,7 +137,7 @@ namespace AgendaOnline.WebApi.Controllers
                 var result = await _signInManager.CheckPasswordSignInAsync(user, userLogin.Password, false);
 
                 if (!result.Succeeded)
-                    return NotFound(new { message = "Usu�rio ou senha incorretas" });
+                    return NotFound(new { message = "Usuario ou senha incorretas" });
 
                 if (result.Succeeded)
                 {

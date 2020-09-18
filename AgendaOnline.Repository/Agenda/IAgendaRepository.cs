@@ -29,6 +29,7 @@ namespace AgendaOnline.Repository
         Agenda[] ObterServicosFinalizadosAsync(int UserId);
         Agenda[] ObterServicosVencidosAsync(int UserId);
         Task<User[]> EmpresaCadastradaAsync(User user);
+        Task<User[]> ClienteCadastradoAsync(User user);
         Task<bool> TemEmpresa(string empresa);
         Task<List<string>> FiltrarEmpresas(string textEmpresa, string segmento, string cidade);
         Task<List<string>> FiltrarSegmentos(string textSegmento, string cidade);

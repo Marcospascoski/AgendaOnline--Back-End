@@ -15,7 +15,7 @@ namespace AgendaOnline.Repository.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.11-servicing-32099")
+                .HasAnnotation("ProductVersion", "2.1.14-servicing-32113")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -106,6 +106,8 @@ namespace AgendaOnline.Repository.Migrations
 
                     b.Property<int>("AccessFailedCount");
 
+                    b.Property<int?>("AgendaId");
+
                     b.Property<TimeSpan>("AlmocoFim");
 
                     b.Property<TimeSpan>("AlmocoIni");
@@ -167,6 +169,8 @@ namespace AgendaOnline.Repository.Migrations
                         .HasMaxLength(256);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AgendaId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasName("EmailIndex");
@@ -260,6 +264,13 @@ namespace AgendaOnline.Repository.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens");
+                });
+
+            modelBuilder.Entity("AgendaOnline.Domain.Identity.User", b =>
+                {
+                    b.HasOne("AgendaOnline.Domain.Agenda", "Agenda")
+                        .WithMany()
+                        .HasForeignKey("AgendaId");
                 });
 
             modelBuilder.Entity("AgendaOnline.Domain.Identity.UserRole", b =>

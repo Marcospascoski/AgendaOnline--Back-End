@@ -107,7 +107,6 @@ namespace AgendaOnline.WebApi.Controllers
             {
                 switch (e.Message)
                 {
-                    case "naoEncontrado": return Ok("naoEncontrado");
                     case "indisponível" : return Ok("indisponível");
                     case "DataHora Ultrapassada" : return Ok("DataHora Ultrapassada");
                     default : return BadRequest(); 

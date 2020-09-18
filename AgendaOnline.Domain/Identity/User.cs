@@ -26,7 +26,7 @@ namespace AgendaOnline.Domain.Identity
         public string Celular { get; set; }
         public string Endereco { get; set; }    
         public List<UserRole> UserRoles { get; set; }
-        public virtual Agenda Agenda { get;}
+        public virtual Agenda Agenda { get; set; }
         public string Role { get; set; }
     }
 }
