@@ -49,6 +49,18 @@ namespace AgendaOnline.WebApi.Controllers
             return Ok(new UserDto());
         }
 
+        [HttpGet("GetUser/{UsuarioId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetUser (int UsuarioId) {
+            User usuario = await _repo.ObterUsuarioPorIdAsync(UsuarioId);
+
+            if (usuario == null) {
+                return Ok("user not found");
+            }
+
+            return Ok(usuario);
+        }
+
         [HttpPost("RegisterUser")]
         [AllowAnonymous]
         public async Task<IActionResult> RegisterUser(UserDto userDto)
