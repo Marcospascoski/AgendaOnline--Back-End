@@ -313,27 +313,80 @@ namespace AgendaOnline.WebApi.Controllers
 
         }
 
+        [HttpGet("ObterImagemDePerfil/{userId}")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ObterImagemDePerfil(int userId)
+        {
+            try
+            {
+                var imagemPerfil = await _service.ObterImagemDePerfil(userId);
+                if(imagemPerfil.Length > 0)
+                    return Ok(imagemPerfil);
+
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("user not found"))
+                {
+                    return Ok("user not found");
+                }
+                else if (e.Message.Equals("user without image"))
+                {
+                    return Ok("user without image");
+                }
+
+            }
+            catch (DbConcurrencyException e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+            }
+            return BadRequest();
+        }
+
         [HttpPost("upload")]
+        [AllowAnonymous]
         public async Task<IActionResult> Upload()
         {
             try
             {
                 var file = Request.Form.Files[0];
-                var folderName = Path.Combine("Resources", "Images");
-                var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+                List<int> idUser = new List<int>();
+                Request.Form.Keys
+                    .Where(n => n.StartsWith("idUser"))
+                    .ToList()
+                    .ForEach(x => idUser.Add(int.Parse(Request.Form[x])));
 
                 if (file.Length > 0)
                 {
-                    var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName;
-                    var fullPath = Path.Combine(pathToSave, fileName.Replace("\"", " ").Trim());
-
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
+                    using (var ms = new MemoryStream())
                     {
-                        file.CopyTo(stream);
+                        file.CopyTo(ms);
+                        var fileBytes = ms.ToArray();
+                        string s = Convert.ToBase64String(fileBytes);
+                        // obter Usuário
+                        try
+                        {
+                            _service.SalvarImagemPerfil(idUser.FirstOrDefault(), s);
+                            return Ok();
+                        }
+                        catch (BusinessException e)
+                        {
+                            if (e.Message.Equals("user not found"))
+                            {
+                                return Ok("user not found");
+                            }
+                            else if (e.Message.Equals("update failed"))
+                            {
+                                return BadRequest();
+                            }
+
+                        }
+                        catch (DbConcurrencyException e)
+                        {
+                            return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
+                        }
                     }
                 }
-
-                return Ok();
             }
             catch (System.Exception e)
             {

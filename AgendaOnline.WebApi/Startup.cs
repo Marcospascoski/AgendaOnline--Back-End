@@ -24,6 +24,7 @@ using Microsoft.IdentityModel.Tokens;
 using AgendaOnline.Domain.Identity;
 using AgendaOnline.Repository;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace AgendaOnline.WebApi
 {
@@ -86,14 +87,14 @@ namespace AgendaOnline.WebApi
                 options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
             })
-            .AddCookie(IdentityConstants.ApplicationScheme, o =>
-            {
-                o.LoginPath = new PathString("/Account/Login");
-                o.Events = new CookieAuthenticationEvents
-                {
-                    OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
-                };
-            })
+            //.AddCookie(IdentityConstants.ApplicationScheme, o =>
+            //{
+            //    o.LoginPath = new PathString("/Account/Login");
+            //    o.Events = new CookieAuthenticationEvents
+            //    {
+            //        OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
+            //    };
+            //})
             .AddCookie(IdentityConstants.ExternalScheme, o =>
             {
                 o.Cookie.Name = IdentityConstants.ExternalScheme;
@@ -131,6 +132,12 @@ namespace AgendaOnline.WebApi
             services.AddScoped<IEventoRepository, EventoRepository>();
             services.AddAutoMapper();
             services.AddCors();
+            services.Configure<FormOptions>(o =>
+            {
+                o.ValueLengthLimit = int.MaxValue;
+                o.MultipartBodyLengthLimit = int.MaxValue;
+                o.MemoryBufferThreshold = int.MaxValue;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

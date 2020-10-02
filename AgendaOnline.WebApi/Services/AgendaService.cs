@@ -4,8 +4,11 @@ using AgendaOnline.Repository;
 using AgendaOnline.WebApi.Dtos;
 using AgendaOnline.WebApi.Services.Exceptions;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,9 +18,11 @@ namespace AgendaOnline.WebApi.Services
     {
         private readonly IAgendaRepository _repo;
         private readonly IMapper _mapper;
+        private readonly UserManager<User> _userManager;
 
-        public AgendaService(IAgendaRepository repo, IMapper mapper)
+        public AgendaService(IAgendaRepository repo, IMapper mapper, UserManager<User> userManager)
         {
+            _userManager = userManager;
             _mapper = mapper;
             _repo = repo;
         }
@@ -191,7 +196,7 @@ namespace AgendaOnline.WebApi.Services
             var horariosAtendimento = await _repo.ObterHorariosAtendimento(agendamentoModel);
             var horarioInicioFim = await _repo.ObterInicioFim(agendamentoModel);
             var agendamentoIndisponivel = await _repo.VerificarIndisponibilidade(agendamentoModel);
-            
+
             TimeSpan horarioAgendado = TimeSpan.Parse(agendaDto.DataHora.ToString("HH:mm:ss"));
 
             if (temEmpresa)
@@ -361,9 +366,9 @@ namespace AgendaOnline.WebApi.Services
                 {
                     throw new DbConcurrencyException(e.Message);
                 }
-         
+
             }
-            
+
         }
 
         public async Task<List<User>> ListaDeAdmins()
@@ -371,7 +376,7 @@ namespace AgendaOnline.WebApi.Services
             var usuarios = await _repo.ObterTodosUsuariosAsync();
             var admins = usuarios.Where(x => x.Role == "Adm").ToList();
 
-            if(admins.Count > 0)
+            if (admins.Count > 0)
             {
                 try
                 {
@@ -394,7 +399,7 @@ namespace AgendaOnline.WebApi.Services
             var usuarios = await _repo.ObterTodosUsuariosAsync();
             var clientes = usuarios.Where(x => x.Role == "User").ToList();
 
-            if(clientes.Count > 0)
+            if (clientes.Count > 0)
             {
                 try
                 {
@@ -459,6 +464,60 @@ namespace AgendaOnline.WebApi.Services
                 }
             }
             return "";
+
+        }
+
+        public void SalvarImagemPerfil(int usuarioId, string imagemToBase64)
+        {
+            try
+            {
+                var usuario = _repo.ObterUsuarioPorIdAsync(usuarioId).Result;
+                usuario.ImagemPerfil = imagemToBase64;
+
+                if (usuario != null)
+                {
+                    var atualizaDados = _userManager.UpdateAsync(usuario);
+                    if (!atualizaDados.Result.Succeeded)
+                        throw new BusinessException("update failed");
+
+                }
+                else
+                {
+                    throw new BusinessException("user not found");
+                }
+            }
+            catch (DbConcurrencyException e)
+            {
+
+                throw new DbConcurrencyException(e.Message);
+            }
+
+        }
+
+        public async Task<string> ObterImagemDePerfil(int usuarioId)
+        {
+            try
+            {
+                var usuario = await _repo.ObterUsuarioPorIdAsync(usuarioId);
+
+                if (usuario != null)
+                {
+                    var imagemUsuario = usuario.ImagemPerfil;
+                    if(imagemUsuario.Length == 0)
+                        throw new BusinessException("user without image");
+
+                    return imagemUsuario;
+                }
+                else
+                {
+                    throw new BusinessException("user not found");
+                }
+            }
+            catch (DbConcurrencyException e)
+            {
+
+                throw new DbConcurrencyException(e.Message);
+            }
 
         }
 
