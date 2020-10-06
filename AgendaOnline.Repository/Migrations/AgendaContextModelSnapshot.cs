@@ -41,6 +41,10 @@ namespace AgendaOnline.Repository.Migrations
 
                     b.Property<string>("Endereco");
 
+                    b.Property<string>("ImagemPerfilCliente");
+
+                    b.Property<string>("ImagemPerfilPrestador");
+
                     b.Property<string>("Nome");
 
                     b.Property<string>("Observacao");
@@ -106,8 +110,6 @@ namespace AgendaOnline.Repository.Migrations
 
                     b.Property<int>("AccessFailedCount");
 
-                    b.Property<int?>("AgendaId");
-
                     b.Property<TimeSpan>("AlmocoFim");
 
                     b.Property<TimeSpan>("AlmocoIni");
@@ -169,8 +171,6 @@ namespace AgendaOnline.Repository.Migrations
                         .HasMaxLength(256);
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AgendaId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasName("EmailIndex");
@@ -264,13 +264,6 @@ namespace AgendaOnline.Repository.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens");
-                });
-
-            modelBuilder.Entity("AgendaOnline.Domain.Identity.User", b =>
-                {
-                    b.HasOne("AgendaOnline.Domain.Agenda", "Agenda")
-                        .WithMany()
-                        .HasForeignKey("AgendaId");
                 });
 
             modelBuilder.Entity("AgendaOnline.Domain.Identity.UserRole", b =>

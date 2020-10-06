@@ -30,6 +30,10 @@ namespace AgendaOnline.Domain
         
         public string Endereco { get; set; }
 
+        public string ImagemPerfilCliente { get; set; }
+        
+        public string ImagemPerfilPrestador { get; set; }
+
         public int? UsuarioId { get; set; }
 
         public int? AdmId { get; set; }

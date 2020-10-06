@@ -35,6 +35,10 @@ namespace AgendaOnline.WebApi.Dtos
 
         public string Cidade { get; set; }
 
+        public string ImagemPerfilCliente { get; set; }
+
+        public string ImagemPerfilPrestador { get; set; }
+
         public int? UsuarioId { get; set; }
 
         public int? AdmId { get; set; }

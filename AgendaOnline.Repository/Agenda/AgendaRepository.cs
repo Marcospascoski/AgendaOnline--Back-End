@@ -57,15 +57,15 @@ namespace AgendaOnline.Repository
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
             List<Agenda> query = await _context.Agendas.Where(x => x.AdmId == UserId || x.UsuarioId == UserId).ToListAsync();
 
-            User adm;
+            User user;
             TimeSpan duracaoAdm = new TimeSpan(0, 0, 0);
             foreach (var agendamento in query)
             {
                 int? idAdm = agendamento.AdmId;
                 if (agendamento.Duracao == semDuracao)
                 {
-                    adm = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
-                    duracaoAdm = adm.Duracao;
+                    user = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                    duracaoAdm = user.Duracao;
                     agendamento.Duracao = duracaoAdm;
                 }
             }
@@ -74,8 +74,8 @@ namespace AgendaOnline.Repository
             foreach (var agendamento in query)
             {
                 int? idAdm = agendamento.AdmId;
-                adm = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
-                endereco = adm.Endereco;
+                user = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                endereco = user.Endereco;
                 if (!String.IsNullOrWhiteSpace(endereco.Trim()))
                 {
                     agendamento.Endereco = endereco;
@@ -86,11 +86,35 @@ namespace AgendaOnline.Repository
             foreach (var agendamento in query)
             {
                 int? idAdm = agendamento.AdmId;
-                adm = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
-                celular = adm.Celular;
+                user = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                celular = user.Celular;
                 if (!String.IsNullOrWhiteSpace(celular.Trim()))
                 {
                     agendamento.CelularAdm = celular;
+                }
+            }
+
+            string base64Cliente = string.Empty;
+            foreach (var agendamento in query)
+            {
+                int? idUsuario = agendamento.UsuarioId;
+                user = _context.Users.Where(x => x.Id == idUsuario).FirstOrDefault();
+                base64Cliente = user.ImagemPerfil;
+                if (!String.IsNullOrWhiteSpace(base64Cliente.Trim()))
+                {
+                    agendamento.ImagemPerfilCliente = "data:image/png;base64," + base64Cliente;
+                }
+            }
+
+            string base64Prestador = string.Empty;
+            foreach (var agendamento in query)
+            {
+                int? idAdm = agendamento.AdmId;
+                user = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
+                base64Prestador = user.ImagemPerfil;
+                if (!String.IsNullOrWhiteSpace(base64Prestador.Trim()))
+                {
+                    agendamento.ImagemPerfilPrestador = "data:image/png;base64," + base64Prestador;
                 }
             }
 
@@ -113,7 +137,8 @@ namespace AgendaOnline.Repository
 
         public async Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && (a.AdmId == agenda.AdmId || a.UsuarioId == agenda.UsuarioId));
+            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && (a.AdmId == agenda.AdmId || a.UsuarioId == agenda.UsuarioId) 
+            && a.Empresa.Trim().ToUpper() == agenda.Empresa.Trim().ToUpper());
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
