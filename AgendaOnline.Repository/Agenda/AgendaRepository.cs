@@ -58,15 +58,35 @@ namespace AgendaOnline.Repository
             List<Agenda> query = await _context.Agendas.Where(x => x.AdmId == UserId || x.UsuarioId == UserId).ToListAsync();
 
             User user;
-            TimeSpan duracaoAdm = new TimeSpan(0, 0, 0);
+            Evento evento;
+            TimeSpan diaTodo = new TimeSpan(0, 0, 0);
+            foreach (var agendamento in query)
+            {
+                DateTime dataAgendamento = agendamento.DataHora;
+                if (agendamento.Duracao == semDuracao)
+                {
+                    if (!agendamento.Observacao.Contains("Disponível"))
+                    {
+                        evento = _context.Eventos.Where(x => x.DataHora.TimeOfDay == diaTodo && x.DataHora.Date == dataAgendamento.Date && x.AdmId == agendamento.AdmId).FirstOrDefault();
+                        if (evento != null)
+                            agendamento.Observacao = evento.Motivo;
+
+                        evento = _context.Eventos.Where(x => x.DataHora.TimeOfDay != diaTodo && x.DataHora == dataAgendamento && x.AdmId == agendamento.AdmId).FirstOrDefault();
+                        if (evento != null)
+                            agendamento.Observacao = evento.Motivo;
+                    }
+
+                }
+            }
+
             foreach (var agendamento in query)
             {
                 int? idAdm = agendamento.AdmId;
                 if (agendamento.Duracao == semDuracao)
                 {
                     user = _context.Users.Where(x => x.Id == idAdm).FirstOrDefault();
-                    duracaoAdm = user.Duracao;
-                    agendamento.Duracao = duracaoAdm;
+                    diaTodo = user.Duracao;
+                    agendamento.Duracao = diaTodo;
                 }
             }
 

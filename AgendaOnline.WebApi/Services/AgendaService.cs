@@ -182,6 +182,7 @@ namespace AgendaOnline.WebApi.Services
 
         public async Task<Agenda> SalvarAlteracoes(AgendaDto agendaDto, string verbo)
         {
+            agendaDto.DataHora = agendaDto.DataHora.AddHours(-3);
             //Implementar no Service
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 
@@ -415,56 +416,6 @@ namespace AgendaOnline.WebApi.Services
             {
                 throw new BusinessException("client not found");
             }
-        }
-
-        public async Task<string> EnviarMotivo(EventoDto eventoDto, string decisao)
-        {
-            TimeSpan diaTodo = new TimeSpan(0, 0, 0);
-            eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
-            var eventoModel = _mapper.Map<Evento>(eventoDto);
-
-            var agendamentoPorUsuario = await _repo.ObterTodosAgendamentosPorUsuarioAsync(eventoModel.AdmId);
-            if (agendamentoPorUsuario.Count > 0)
-            {
-
-                try
-                {
-                    //encontrar o agendamento correto pelo AdmId e DataHora.
-                    if (eventoModel.DataHora.TimeOfDay == diaTodo)
-                    {
-                        agendamentoPorUsuario = agendamentoPorUsuario.Where(x => x.DataHora.Date == eventoModel.DataHora.Date).ToList();
-                    }
-                    else
-                    {
-                        agendamentoPorUsuario = agendamentoPorUsuario.Where(x => x.DataHora == eventoModel.DataHora).ToList();
-                    }
-                    if (agendamentoPorUsuario.Count > 0)
-                    {
-                        if (decisao.Equals("indisponibilizar"))
-                        {
-                            agendamentoPorUsuario.FirstOrDefault().Observacao = eventoModel.Motivo;
-                        }
-                        else
-                        {
-                            agendamentoPorUsuario.FirstOrDefault().Observacao = "Agendamento Disponível Novamente";
-                        }
-                        _repo.Update(agendamentoPorUsuario.FirstOrDefault());
-                        await _repo.SaveChangesAsync();
-                        return await Task.FromResult("Atualizado com sucesso");
-                    }
-                    else
-                    {
-                        return "não necessário";
-                    }
-
-                }
-                catch (DbConcurrencyException e)
-                {
-                    throw new DbConcurrencyException(e.Message);
-                }
-            }
-            return "";
-
         }
 
         public void SalvarImagemPerfil(int usuarioId, string imagemToBase64)

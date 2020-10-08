@@ -13,10 +13,12 @@ namespace AgendaOnline.WebApi.Services
     public class EventoService
     {
         private readonly IEventoRepository _repo;
+        private readonly AgendaContext _agendaContext;
         private readonly IMapper _mapper;
 
-        public EventoService(IEventoRepository repo, IMapper mapper)
+        public EventoService(IEventoRepository repo, IMapper mapper, AgendaContext agendaContext)
         {
+            _agendaContext = agendaContext;
             _mapper = mapper;
             _repo = repo;
         }
@@ -55,10 +57,30 @@ namespace AgendaOnline.WebApi.Services
 
             var eventoModel = _mapper.Map<Evento>(eventoDto);
             var eventoBase = await _repo.EventoExistente(eventoModel);
+
+            TimeSpan diaTodo = new TimeSpan(0, 0, 0);
+            List<Agenda> agendas;
             if (eventoBase.Length == 1)
             {
                 try
                 {
+                    agendas = _agendaContext.Agendas.Where(x => x.DataHora.Date == eventoBase[0].DataHora.Date
+                    && eventoBase[0].DataHora.TimeOfDay == diaTodo
+                    && x.AdmId == eventoBase[0].AdmId).ToList();
+                    foreach (var agenda in agendas)
+                    {
+                        agenda.Observacao = "Agendamento Disponível Novamente";
+                    }
+
+                    agendas = _agendaContext.Agendas.Where(x => x.DataHora == eventoBase[0].DataHora
+                    && eventoBase[0].DataHora.TimeOfDay != diaTodo
+                    && x.AdmId == eventoBase[0].AdmId).ToList();
+                    foreach (var agenda in agendas)
+                    {
+                        agenda.Observacao = "Agendamento Disponível Novamente";
+                    }
+
+
                     return eventoBase;
                 }
                 catch (DbConcurrencyException e)
@@ -122,7 +144,7 @@ namespace AgendaOnline.WebApi.Services
                 if (eventosUltrapassadosMesmoDia.Length > 0)
                     await ExcluirEventos(eventosUltrapassadosMesmoDia);
             }
-            if(eventosUltrapassadosOutroDia.Length > 0)
+            if (eventosUltrapassadosOutroDia.Length > 0)
             {
                 if (eventosUltrapassadosOutroDia.Length > 0)
                     await ExcluirEventos(eventosUltrapassadosOutroDia);
@@ -134,11 +156,11 @@ namespace AgendaOnline.WebApi.Services
               .Select(y => y.Key)
               .ToList();
 
-            
+
             List<DateTime> eventosMesmoDia = new List<DateTime>();
             List<DateTime> eventosDistinct = new List<DateTime>();
-            List<string> result = new List<string>();   
-            if(dataMaisDeUma.Count == 0)
+            List<string> result = new List<string>();
+            if (dataMaisDeUma.Count == 0)
             {
                 var datasSemEventosDiaTodo = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora).ToList();
                 datasSemEventosDiaTodo.RemoveAll(x => x.Date == DateTime.Today && x.TimeOfDay < DateTime.Now.TimeOfDay && x.TimeOfDay != diaTodo);
@@ -156,8 +178,8 @@ namespace AgendaOnline.WebApi.Services
             else
             {
                 var datasSemEventosDiaTodo = eventosPorPrestador.Where(x => x.DataHora.Date >= DateTime.Now.Date).Select(x => x.DataHora.Date).ToArray();
-                
-                List<DateTime> datasConvertidas = new List<DateTime>(); 
+
+                List<DateTime> datasConvertidas = new List<DateTime>();
                 foreach (var item in datasSemEventosDiaTodo)
                 {
                     datasConvertidas.Add(item);
@@ -178,17 +200,17 @@ namespace AgendaOnline.WebApi.Services
                     {
                         data.RemoveAll(x => x.TimeOfDay != diaTodo);
                     }
-                    if(data.Count > 0)
+                    if (data.Count > 0)
                     {
                         foreach (var dt in data)
                         {
                             datasTratadas.Add(dt);
                         }
-                        
+
                     }
 
                 }
-                
+
                 foreach (var item in datasTratadas)
                 {
                     eventosMesmoDia.Add(item);
@@ -200,8 +222,8 @@ namespace AgendaOnline.WebApi.Services
                 {
                     dataHorasDiversas.RemoveAll(x => x.Date == item.Date);
                 }
-                 
-                
+
+
                 foreach (var item in dataHorasDiversas)
                 {
                     eventosDistinct.Add(item);

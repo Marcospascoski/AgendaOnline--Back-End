@@ -67,10 +67,9 @@ namespace AgendaOnline.WebApi.Controllers
                 var disponibilizarEventoService = await _service.DisponibilizarEvento(eventoDto);
                 if (disponibilizarEventoService != null)
                 {
-                    eventoDto.DataHora = data;
-                    var enviarMotivoEmAgendamento = await _serviceAgenda.EnviarMotivo(eventoDto, "disponibilizar");
+                    await _service.ExcluirEventos(disponibilizarEventoService);
                 }
-                await _service.ExcluirEventos(disponibilizarEventoService);
+                
                 return Ok();
             }
             catch (BusinessException e)
@@ -95,12 +94,6 @@ namespace AgendaOnline.WebApi.Controllers
             try
             {
                 var declararacaoMotivoService = await _service.DeclararMotivo(eventoDto);
-                if(declararacaoMotivoService != null)
-                {
-                    eventoDto.DataHora = data;
-                    var enviarMotivoEmAgendamento = await _serviceAgenda.EnviarMotivo(eventoDto, "indisponibilizar");
-                }
-                    
                 return Created($"/api/evento/{eventoDto.Id}", _mapper.Map<EventoDto>(declararacaoMotivoService));
             }
             catch (BusinessException e)
