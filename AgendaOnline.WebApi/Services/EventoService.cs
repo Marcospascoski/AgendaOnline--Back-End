@@ -13,11 +13,15 @@ namespace AgendaOnline.WebApi.Services
     public class EventoService
     {
         private readonly IEventoRepository _repo;
+        private readonly AgendaService _agendaService;
         private readonly AgendaContext _agendaContext;
         private readonly IMapper _mapper;
 
-        public EventoService(IEventoRepository repo, IMapper mapper, AgendaContext agendaContext)
+        public EventoService(IEventoRepository repo, IMapper mapper,
+            AgendaService agendaService,
+            AgendaContext agendaContext)
         {
+            _agendaService = agendaService;
             _agendaContext = agendaContext;
             _mapper = mapper;
             _repo = repo;
@@ -53,14 +57,14 @@ namespace AgendaOnline.WebApi.Services
 
         public async Task<Evento[]> DisponibilizarEvento(EventoDto eventoDto)
         {
-            eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
+            TimeSpan diaTodo = new TimeSpan(0, 0, 0);
+            eventoDto.DataHora = eventoDto.DataHora.TimeOfDay != diaTodo ? eventoDto.DataHora.AddHours(-3) : eventoDto.DataHora.Date;
 
             var eventoModel = _mapper.Map<Evento>(eventoDto);
             var eventoBase = await _repo.EventoExistente(eventoModel);
 
-            TimeSpan diaTodo = new TimeSpan(0, 0, 0);
             List<Agenda> agendas;
-            if (eventoBase.Length == 1)
+            if (eventoBase.Length > 0)
             {
                 try
                 {
@@ -70,6 +74,7 @@ namespace AgendaOnline.WebApi.Services
                     foreach (var agenda in agendas)
                     {
                         agenda.Observacao = "Agendamento Disponível Novamente";
+                        await _agendaService.AtualizarObservacaoAgenda(agenda);
                     }
 
                     agendas = _agendaContext.Agendas.Where(x => x.DataHora == eventoBase[0].DataHora
@@ -78,6 +83,7 @@ namespace AgendaOnline.WebApi.Services
                     foreach (var agenda in agendas)
                     {
                         agenda.Observacao = "Agendamento Disponível Novamente";
+                        await _agendaService.AtualizarObservacaoAgenda(agenda);
                     }
 
 

@@ -44,12 +44,11 @@ namespace AgendaOnline.Repository
             return (await _context.SaveChangesAsync()) > 0;
         }
 
-        public async Task<Agenda[]> ObterAgenda(Agenda agenda)
+        public async Task<List<Agenda>> ObterAgenda(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == agenda.AdmId || x.UsuarioId == agenda.UsuarioId && x.DataHora.Date == agenda.DataHora.Date);
-            query = query.AsNoTracking();
+            List<Agenda> query = await _context.Agendas.Where(x => x.Id == agenda.Id).ToListAsync();
 
-            return await query.ToArrayAsync();
+            return query;
         }
 
         public async Task<List<Agenda>> ObterTodosAgendamentosPorUsuarioAsync(int UserId)
@@ -63,20 +62,19 @@ namespace AgendaOnline.Repository
             foreach (var agendamento in query)
             {
                 DateTime dataAgendamento = agendamento.DataHora;
-                if (agendamento.Duracao == semDuracao)
-                {
-                    if (!agendamento.Observacao.Contains("Disponível"))
-                    {
-                        evento = _context.Eventos.Where(x => x.DataHora.TimeOfDay == diaTodo && x.DataHora.Date == dataAgendamento.Date && x.AdmId == agendamento.AdmId).FirstOrDefault();
-                        if (evento != null)
-                            agendamento.Observacao = evento.Motivo;
 
-                        evento = _context.Eventos.Where(x => x.DataHora.TimeOfDay != diaTodo && x.DataHora == dataAgendamento && x.AdmId == agendamento.AdmId).FirstOrDefault();
-                        if (evento != null)
-                            agendamento.Observacao = evento.Motivo;
-                    }
+                evento = _context.Eventos.Where(x => x.DataHora.TimeOfDay == diaTodo
+                && x.DataHora.Date == dataAgendamento.Date
+                && x.AdmId == agendamento.AdmId).FirstOrDefault();
+                if (evento != null)
+                    agendamento.Observacao = evento.Motivo;
 
-                }
+                evento = _context.Eventos.Where(x => x.DataHora.TimeOfDay != diaTodo
+                && x.DataHora == dataAgendamento
+                && x.AdmId == agendamento.AdmId).FirstOrDefault();
+                if (evento != null)
+                    agendamento.Observacao = evento.Motivo;
+
             }
 
             foreach (var agendamento in query)
@@ -157,13 +155,13 @@ namespace AgendaOnline.Repository
 
         public async Task<Agenda[]> ObterClientesAgendadosMesmaDataAsync(Agenda agenda)
         {
-            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && (a.AdmId == agenda.AdmId || a.UsuarioId == agenda.UsuarioId) 
+            IQueryable<Agenda> query = _context.Agendas.Where(a => a.DataHora == agenda.DataHora && (a.AdmId == agenda.AdmId || a.UsuarioId == agenda.UsuarioId)
             && a.Empresa.Trim().ToUpper() == agenda.Empresa.Trim().ToUpper());
             query = query.AsNoTracking();
 
             return await query.ToArrayAsync();
         }
-        
+
         public async Task<Agenda[]> ObterDiasAgendadosAsync(int UsuarioId)
         {
             IQueryable<Agenda> query = _context.Agendas.Where(x => x.AdmId == UsuarioId || x.UsuarioId == UsuarioId).OrderBy(x => x.DataHora);
@@ -188,14 +186,14 @@ namespace AgendaOnline.Repository
             //Horarios que a empresa trabalha
             List<TimeSpan> horarios = new List<TimeSpan>();
             List<TimeSpan> horariosIndisponiveis = new List<TimeSpan>();
-            TimeSpan diaIndisponivel = new TimeSpan(0,0,0);
+            TimeSpan diaIndisponivel = new TimeSpan(0, 0, 0);
             TimeSpan duracaoEmpresaNaoEstipulada = new TimeSpan(1, 0, 0);
 
             TimeSpan calc = new TimeSpan();
             calc = abertura;
             horarios.Add(calc);
 
-            if(duracao == diaIndisponivel)
+            if (duracao == diaIndisponivel)
             {
                 horarios.RemoveAll(x => x.Equals(x));
                 horarios.Add(duracaoEmpresaNaoEstipulada);
@@ -233,7 +231,7 @@ namespace AgendaOnline.Repository
                 }
                 horarios.RemoveAll(x => x >= almocoIni && x < almocoFim);
 
-                if(data == DateTime.Today)
+                if (data == DateTime.Today)
                 {
                     horarios.RemoveAll(x => x < DateTime.Now.TimeOfDay);
                 }
@@ -254,8 +252,8 @@ namespace AgendaOnline.Repository
             var fechamento = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.Fechamento).ToList().First();
             var almocoIni = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Id == agenda.AdmId).Select(x => x.AlmocoFim).ToList().First();
-            
-            
+
+
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
             List<TimeSpan> horarios = new List<TimeSpan>();
 
@@ -277,7 +275,7 @@ namespace AgendaOnline.Repository
                 horarios.RemoveAll(x => x >= almocoIni && x < almocoFim);
                 horarios.Remove(fechamento);
             }
-            
+
             return horarios;
         }
 
@@ -299,21 +297,22 @@ namespace AgendaOnline.Repository
             horarios.Add(almocoIni);
             horarios.Add(almocoFim);
             horarios.Add(fechamento);
-            
+
             //Arrumar if
-            if((horaMarcada > horarios[0] && horaMarcada < horarios[1]) || 
+            if ((horaMarcada > horarios[0] && horaMarcada < horarios[1]) ||
                (horaMarcada < horarios[3] && horaMarcada > horarios[2]))
             {
-               for (int hora = 0; hora < horarios.Count; hora++)
-               {
-                   if(hora % 2 == 1){
-                      if(horaMarcada >= horarios[hora] && horaMarcada < horarios[hora + 1])
-                      {
-                         horarios.RemoveAll(x => x.Equals(x));   
-                         horarios.Add(semDuracao); 
-                      }               
-                   }
-               }
+                for (int hora = 0; hora < horarios.Count; hora++)
+                {
+                    if (hora % 2 == 1)
+                    {
+                        if (horaMarcada >= horarios[hora] && horaMarcada < horarios[hora + 1])
+                        {
+                            horarios.RemoveAll(x => x.Equals(x));
+                            horarios.Add(semDuracao);
+                        }
+                    }
+                }
             }
             else
             {
@@ -334,7 +333,7 @@ namespace AgendaOnline.Repository
             var agendamentosIndisponiveis = dataHoraAdm.Select(x => x.Motivo).ToList();
             var diaIndisponibilizado = dataAdm.Where(x => x.DataHora.TimeOfDay == diaTodoIndisponivel).Select(x => x.Motivo).ToList();
 
-            if(diaIndisponibilizado.Count > 0)
+            if (diaIndisponibilizado.Count > 0)
             {
                 return await Task.FromResult(diaIndisponibilizado.FirstOrDefault());
             }
@@ -348,22 +347,22 @@ namespace AgendaOnline.Repository
 
         public Agenda[] ObterServicosFinalizadosAsync(int UserId)
         {
-            TimeSpan semDuracao = new TimeSpan(0,0,0);
+            TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 
             var agendamentos = _context.Agendas.Where(x => x.AdmId == UserId || x.UsuarioId == UserId).ToList();
             List<Agenda> agendamentoList = new List<Agenda>();
             User adm;
             foreach (var agenda in agendamentos)
             {
-                adm = _context.Users.Where(x => x.Id == agenda.AdmId).FirstOrDefault();   
+                adm = _context.Users.Where(x => x.Id == agenda.AdmId).FirstOrDefault();
 
-                if(adm.Duracao == semDuracao)
+                if (adm.Duracao == semDuracao)
                 {
                     List<Agenda> agendasServicosRealizados = agendamentos.Where(a => a.AdmId == adm.Id &&
                     a.DataHora <= DateTime.Now && a.DataHora.AddMinutes(a.Duracao.Minutes) <= DateTime.Now &&
                     a.DataHora.AddHours(a.Duracao.Hours) <= DateTime.Now).ToList();
-                    
-                    if(agendasServicosRealizados != null)
+
+                    if (agendasServicosRealizados != null)
                     {
                         foreach (var ag in agendasServicosRealizados)
                         {
@@ -373,17 +372,17 @@ namespace AgendaOnline.Repository
                 }
                 else
                 {
-                    List<Agenda> agendasVencidas = agendamentos.Where(a => a.AdmId == adm.Id && a.DataHora <= DateTime.Now 
-                    && a.DataHora.AddMinutes(adm.Duracao.Minutes) <= DateTime.Now && 
+                    List<Agenda> agendasVencidas = agendamentos.Where(a => a.AdmId == adm.Id && a.DataHora <= DateTime.Now
+                    && a.DataHora.AddMinutes(adm.Duracao.Minutes) <= DateTime.Now &&
                     a.DataHora.AddHours(adm.Duracao.Hours) <= DateTime.Now).ToList();
-                    if(agendasVencidas != null)
+                    if (agendasVencidas != null)
                     {
                         foreach (var ag in agendasVencidas)
                         {
                             agendamentoList.Add(ag);
                         }
                     }
-                     
+
                 }
             }
 
@@ -393,7 +392,7 @@ namespace AgendaOnline.Repository
             {
                 agendamentosVencidos[i] = agendamentosDistinct[i];
             }
-            
+
 
             return agendamentosVencidos;
         }
@@ -490,7 +489,8 @@ namespace AgendaOnline.Repository
 
             var contemRoles = roles.Any(x => x == "User" || x == "Adm");
 
-            if (!contemRoles) {
+            if (!contemRoles)
+            {
                 Role roleUser = new Role();
                 roleUser.Name = "User";
                 roleUser.NormalizedName = "User";

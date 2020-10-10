@@ -41,11 +41,10 @@ namespace AgendaOnline.WebApi.Controllers
                 List<Agenda> agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
                 if (agendaAtual.Count <= 0)
                 {
-                    return Ok(agendaAtual);
+                    return Ok(agendaAtual.OrderBy(x => x.DataHora));
                 }
-                //var results = _mapper.Map<AgendaDto>(agendamentoAtual);
 
-                return Ok(agendaAtual);
+                return Ok(agendaAtual.OrderBy(x => x.DataHora));
             }
             catch (System.Exception e)
             {

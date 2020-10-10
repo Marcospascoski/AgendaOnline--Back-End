@@ -187,8 +187,8 @@ namespace AgendaOnline.WebApi.Services
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 
             var agendamentoModel = _mapper.Map<Agenda>(agendaDto);
-            var agenda = await _repo.ObterAgenda(agendamentoModel);
-            var agendamento = await _repo.ObterAgendamentoPorIdAsync(agenda.Select(x => x.Id).FirstOrDefault());
+            var agendamento = await _repo.ObterAgenda(agendamentoModel);
+            var agenda = agendamento.FirstOrDefault();
             var admins = await _repo.ObterTodosUsuariosAsync();
             var empresa = admins.Where(x => x.Id == agendaDto.UsuarioId || x.Id == agendaDto.AdmId).Select(x => x.Company).FirstOrDefault();
             var temEmpresa = await _repo.TemEmpresa(empresa);
@@ -217,9 +217,8 @@ namespace AgendaOnline.WebApi.Services
                                     {
                                         try
                                         {
-                                            agendaDto.Id = agendamento.Id;
-                                            _mapper.Map(agendaDto, agendamento);
-                                            _repo.Update(agendamento);
+                                            _mapper.Map(agendaDto, agenda);
+                                            _repo.Update(agenda);
                                             await _repo.SaveChangesAsync();
                                             return agendamentoModel;
                                         }
@@ -262,9 +261,8 @@ namespace AgendaOnline.WebApi.Services
                                 {
                                     try
                                     {
-                                        agendaDto.Id = agendamento.Id;
-                                        _mapper.Map(agendaDto, agendamento);
-                                        _repo.Update(agendamento);
+                                        _mapper.Map(agendaDto, agenda);
+                                        _repo.Update(agenda);
                                         await _repo.SaveChangesAsync();
                                         return agendamentoModel;
                                     }
@@ -467,6 +465,20 @@ namespace AgendaOnline.WebApi.Services
             catch (DbConcurrencyException e)
             {
 
+                throw new DbConcurrencyException(e.Message);
+            }
+
+        }
+
+        public async Task AtualizarObservacaoAgenda(Agenda agenda)
+        {
+            try
+            {
+                _repo.Update(agenda);
+                await _repo.SaveChangesAsync();
+            }
+            catch (DbConcurrencyException e)
+            {
                 throw new DbConcurrencyException(e.Message);
             }
 
