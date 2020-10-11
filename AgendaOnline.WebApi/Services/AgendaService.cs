@@ -183,6 +183,9 @@ namespace AgendaOnline.WebApi.Services
         public async Task<Agenda> SalvarAlteracoes(AgendaDto agendaDto, string verbo)
         {
             agendaDto.DataHora = agendaDto.DataHora.AddHours(-3);
+            //string data = agendaDto.DataHora.Month + "/" + agendaDto.DataHora.Day + "/" + agendaDto.DataHora.Year + " "
+            //    + agendaDto.DataHora.TimeOfDay;
+            //agendaDto.DataHora = Convert.ToDateTime(data);
             //Implementar no Service
             TimeSpan semDuracao = new TimeSpan(0, 0, 0);
 
@@ -373,13 +376,19 @@ namespace AgendaOnline.WebApi.Services
         public async Task<List<User>> ListaDeAdmins()
         {
             var usuarios = await _repo.ObterTodosUsuariosAsync();
-            var admins = usuarios.Where(x => x.Role == "Adm").ToList();
-
-            if (admins.Count > 0)
+            var adms = usuarios.Where(x => x.Role == "Adm").ToList();
+            List<User> admsSemImagem = new List<User>();
+            if (adms.Count > 0)
             {
                 try
                 {
-                    return admins;
+                    foreach (var adm in adms)
+                    {
+                        adm.ImagemPerfil = "";
+                        admsSemImagem.Add(adm);
+
+                    }
+                    return admsSemImagem;
                 }
                 catch (DbConcurrencyException e)
                 {
@@ -393,16 +402,43 @@ namespace AgendaOnline.WebApi.Services
             }
         }
 
+        public async Task<User> ObterUsuario(string userName)
+        {
+            var usuarios = await _repo.ObterUsuarioAsync(userName);
+
+            try
+            {
+                if (usuarios != null)
+                {
+                    return usuarios;
+                }
+                else
+                {
+                    throw new BusinessException("user not found");
+                }
+            }
+            catch (DbConcurrencyException e)
+            {
+                throw new DbConcurrencyException(e.Message);
+            }
+        }
+
         public async Task<List<User>> ListaDeClientes()
         {
             var usuarios = await _repo.ObterTodosUsuariosAsync();
             var clientes = usuarios.Where(x => x.Role == "User").ToList();
-
+            List<User> clientesSemImagem = new List<User>();
             if (clientes.Count > 0)
             {
                 try
                 {
-                    return clientes;
+                    foreach (var cliente in clientes)
+                    {
+                        cliente.ImagemPerfil = "";
+                        clientesSemImagem.Add(cliente);
+
+                    }
+                    return clientesSemImagem;
                 }
                 catch (DbConcurrencyException e)
                 {

@@ -139,6 +139,13 @@ namespace AgendaOnline.Repository
             return query;
         }
 
+        public async Task<User> ObterUsuarioAsync(string userName)
+        {
+            User user = await _context.Users.Where(x => x.UserName == userName).FirstOrDefaultAsync();
+
+            return user;
+        }
+
         public async Task<List<User>> ObterTodosUsuariosAsync()
         {
             List<User> query = await _context.Users.OrderByDescending(x => x.Id).ToListAsync();
@@ -181,7 +188,7 @@ namespace AgendaOnline.Repository
             var almocoIni = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.AlmocoIni).ToList().First();
             var almocoFim = _context.Usuarios.Where(x => x.Company == empresa).Select(x => x.AlmocoFim).ToList().First();
             var datasIndisponiveis = _context.Eventos.Where(x => x.AdmId == idPorEmpresa && x.DataHora.Date == data.Date).Select(x => x.DataHora).ToList();
-            var horariosAgendados = _context.Agendas.Where(x => x.AdmId == idPorEmpresa).Select(x => x.DataHora.TimeOfDay).ToList();
+            var horariosAgendados = _context.Agendas.Where(x => x.AdmId == idPorEmpresa && x.DataHora.Date == data).Select(x => x.DataHora.TimeOfDay).ToList();
 
             //Horarios que a empresa trabalha
             List<TimeSpan> horarios = new List<TimeSpan>();
@@ -240,6 +247,8 @@ namespace AgendaOnline.Repository
                 {
                     horarios.Remove(horariosMarcados);
                 }
+
+                horarios.Remove(fechamento);
             }
 
             return horarios;

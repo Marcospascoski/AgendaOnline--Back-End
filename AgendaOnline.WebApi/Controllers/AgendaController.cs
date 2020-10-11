@@ -31,6 +31,7 @@ namespace AgendaOnline.WebApi.Controllers
             _repo = repo;
         }
 
+        
 
         [HttpGet("ListaAgendamentosPorUsuario/{UserId}")]
         [AllowAnonymous]
@@ -190,6 +191,39 @@ namespace AgendaOnline.WebApi.Controllers
 
             }
             catch (System.Exception e)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
+            }
+        }
+
+        [HttpGet("ObterUsuario")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ObterUsuario(string UserName)
+        {
+            try
+            {
+                var user = await _service.ObterUsuario(UserName);
+                if(user.Role == "Adm")
+                {
+                    var results = _mapper.Map<AdmDto>(user);
+                    return Ok(results);
+                }
+                else
+                {
+                    var results = _mapper.Map<UserDto>(user);
+                    return Ok(results);
+                }
+                
+            }
+            catch (BusinessException e)
+            {
+                if (e.Message.Equals("user not found"))
+                    return Ok("user not found");
+
+                return BadRequest();
+
+            }
+            catch (DbConcurrencyException e)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou");
             }
