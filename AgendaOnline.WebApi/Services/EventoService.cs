@@ -103,7 +103,6 @@ namespace AgendaOnline.WebApi.Services
         public async Task<Evento> DeclararMotivo(EventoDto eventoDto)
         {
             TimeSpan diaTodo = new TimeSpan(0, 0, 0);
-            eventoDto.DataHora = eventoDto.DataHora.AddHours(-3);
             var eventoModel = _mapper.Map<Evento>(eventoDto);
 
             var eventoDesatualizado = await _repo.DataHorasUltrapassadas(eventoModel);

@@ -55,11 +55,13 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpGet("HorariosDisponiveis")]
         [AllowAnonymous]
-        public async Task<ActionResult> HorariosDisponiveis(string empresa, DateTime data)
+        public async Task<ActionResult> HorariosDisponiveis(string empresa, string data)
         {
+            DateTime dateValue = new DateTime();
+            DateTime.TryParse(data.ToString(), out dateValue);
             try
             {
-                var serviceHorariosDisponiveis = await _service.ListarHorariosDisponiveis(empresa, data);
+                var serviceHorariosDisponiveis = await _service.ListarHorariosDisponiveis(empresa, dateValue);
                 return Ok(serviceHorariosDisponiveis);
             }
             catch(BusinessException e)

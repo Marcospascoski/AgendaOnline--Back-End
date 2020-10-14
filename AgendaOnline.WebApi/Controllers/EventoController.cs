@@ -10,6 +10,7 @@ using System.IO;
 using System.Net.Http.Headers;
 using System.Linq;
 using System;
+using System.Web;
 using Microsoft.AspNetCore.Authorization;
 using AgendaOnline.WebApi.Services;
 using AgendaOnline.WebApi.Services.Exceptions;
@@ -88,9 +89,9 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpPost("DeclararMotivo")]
         [AllowAnonymous]
-        public async Task<IActionResult> DeclararMotivo(EventoDto eventoDto)
+        public async Task<IActionResult> DeclararMotivo([FromForm]EventoDto eventoDto)
         {
-            DateTime data = eventoDto.DataHora;
+            eventoDto.DataHora = Convert.ToDateTime(eventoDto.DataHora.ToString());
             try
             {
                 var declararacaoMotivoService = await _service.DeclararMotivo(eventoDto);
