@@ -315,7 +315,7 @@ namespace AgendaOnline.WebApi.Services
 
         }
 
-        public async Task MotorRemocao(int UserId)
+        public void MotorRemocao(int UserId)
         {
 
             var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(UserId);
@@ -326,7 +326,7 @@ namespace AgendaOnline.WebApi.Services
                 try
                 {
                     _repo.DeleteRange(idDataServicoFinalizado);
-                    await _repo.SaveChangesAsync();
+                    _repo.SaveChangesAsync();
                 }
                 catch (DbConcurrencyException e)
                 {
@@ -339,7 +339,7 @@ namespace AgendaOnline.WebApi.Services
                 try
                 {
                     _repo.DeleteRange(idDataServicoFinalizado);
-                    await _repo.SaveChangesAsync();
+                    _repo.SaveChangesAsync();
                 }
                 catch (DbConcurrencyException e)
                 {
@@ -399,6 +399,34 @@ namespace AgendaOnline.WebApi.Services
             else
             {
                 throw new BusinessException("adm not found");
+            }
+        }
+
+        public async Task<List<User>> ListaDeUsuarios()
+        {
+            var usuarios = await _repo.ObterTodosUsuariosAsync();
+            List<User> usersSemImagem = new List<User>();
+            if (usuarios.Count > 0)
+            {
+                try
+                {
+                    foreach (var user in usuarios)
+                    {
+                        user.ImagemPerfil = "";
+                        usersSemImagem.Add(user);
+
+                    }
+                    return usersSemImagem;
+                }
+                catch (DbConcurrencyException e)
+                {
+                    throw new DbConcurrencyException(e.Message);
+                }
+
+            }
+            else
+            {
+                throw new BusinessException("user not found");
             }
         }
 

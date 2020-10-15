@@ -35,11 +35,11 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpGet("ListaAgendamentosPorUsuario/{UserId}")]
         [AllowAnonymous]
-        public async Task<ActionResult> ListaAgendamentosPorUsuario(int UserId)
+        public ActionResult ListaAgendamentosPorUsuario(int UserId)
         {
             try
             {
-                List<Agenda> agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId);
+                List<Agenda> agendaAtual = _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId).Result;
                 if (agendaAtual.Count <= 0)
                 {
                     return Ok(agendaAtual.OrderBy(x => x.DataHora));
@@ -261,8 +261,8 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                var usuarios = await _repo.ObterTodosUsuariosAsync();
-                var results = _mapper.Map<AdmDto[]>(usuarios);
+                var users = await _service.ListaDeUsuarios();
+                var results = _mapper.Map<AdmDto[]>(users);
                 return Ok(results);
             }
             catch (BusinessException e)
@@ -334,11 +334,11 @@ namespace AgendaOnline.WebApi.Controllers
 
         [HttpDelete("MotorRemocao/{UserId}")]
         [AllowAnonymous]
-        public async Task<ActionResult> MotorRemocao(int UserId)
+        public ActionResult MotorRemocao(int UserId)
         {
             try
             {
-                await _service.MotorRemocao(UserId);
+                _service.MotorRemocao(UserId);
                 return Ok();
             }
             catch (DbConcurrencyException e)
