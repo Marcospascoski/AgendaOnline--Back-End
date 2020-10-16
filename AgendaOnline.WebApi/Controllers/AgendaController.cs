@@ -31,7 +31,7 @@ namespace AgendaOnline.WebApi.Controllers
             _repo = repo;
         }
 
-        
+
 
         [HttpGet("ListaAgendamentosPorUsuario/{UserId}")]
         [AllowAnonymous]
@@ -39,13 +39,16 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                List<Agenda> agendaAtual = _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId).Result;
-                if (agendaAtual.Count <= 0)
+                List<Agenda> agendaAtual2 = _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId).Result;
+                if (agendaAtual2.Count > 0)
                 {
-                    return Ok(agendaAtual.OrderBy(x => x.DataHora));
+                    return Ok(agendaAtual2.OrderBy(x => x.DataHora));
+                }
+                else
+                {
+                    return Ok();
                 }
 
-                return Ok(agendaAtual.OrderBy(x => x.DataHora));
             }
             catch (System.Exception e)
             {
@@ -64,18 +67,18 @@ namespace AgendaOnline.WebApi.Controllers
                 var serviceHorariosDisponiveis = await _service.ListarHorariosDisponiveis(empresa, dateValue);
                 return Ok(serviceHorariosDisponiveis);
             }
-            catch(BusinessException e)
-            {   
+            catch (BusinessException e)
+            {
                 switch (e.Message)
                 {
                     case "diaVencido": return Ok("diaVencido");
-                    case "indisponível" : return Ok("indisponível");
-                    case "duracaoNaoEstipulada" : return Ok("duracaoNaoEstipulada");
-                    case "empresainvalida" : return Ok("empresainvalida");
-                    default  : return BadRequest();  
+                    case "indisponível": return Ok("indisponível");
+                    case "duracaoNaoEstipulada": return Ok("duracaoNaoEstipulada");
+                    case "empresainvalida": return Ok("empresainvalida");
+                    default: return BadRequest();
                 }
             }
-            catch(DbConcurrencyException e)
+            catch (DbConcurrencyException e)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Banco de dados Falhou, pelo motivo: {0}" + e);
             }
@@ -93,11 +96,11 @@ namespace AgendaOnline.WebApi.Controllers
             }
             catch (BusinessException e)
             {
-                if(e.Message.Equals("Não encontrado"))
+                if (e.Message.Equals("Não encontrado"))
                     return Ok("NotFound");
 
                 return BadRequest();
-               
+
             }
             catch (DbConcurrencyException e)
             {
@@ -205,7 +208,7 @@ namespace AgendaOnline.WebApi.Controllers
             try
             {
                 var user = await _service.ObterUsuario(UserName);
-                if(user.Role == "Adm")
+                if (user.Role == "Adm")
                 {
                     var results = _mapper.Map<AdmDto>(user);
                     return Ok(results);
@@ -215,7 +218,7 @@ namespace AgendaOnline.WebApi.Controllers
                     var results = _mapper.Map<UserDto>(user);
                     return Ok(results);
                 }
-                
+
             }
             catch (BusinessException e)
             {
@@ -283,16 +286,22 @@ namespace AgendaOnline.WebApi.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> ListaDiasAgendados(int AdmId)
         {
-            List<string> diasAgendadosService = new List<string>();
             try
             {
-                diasAgendadosService = await _service.ListaDiasAgendados(AdmId);
-                return Ok(diasAgendadosService);
+                List<string> diasAgendadosService = await _service.ListaDiasAgendados(AdmId);
+                if (diasAgendadosService.Count > 0)
+                {
+                    return Ok(diasAgendadosService);
+                }
+                else
+                {
+                    return Ok();
+                }
             }
             catch (BusinessException e)
             {
                 if (e.Message.Equals("vazio"))
-                    return Ok(diasAgendadosService);
+                    return Ok("vazio");
 
                 return BadRequest();
 
@@ -355,7 +364,7 @@ namespace AgendaOnline.WebApi.Controllers
             try
             {
                 var imagemPerfil = await _service.ObterImagemDePerfil(userId);
-                if(imagemPerfil.Length > 0)
+                if (imagemPerfil.Length > 0)
                     return Ok(imagemPerfil);
 
             }
