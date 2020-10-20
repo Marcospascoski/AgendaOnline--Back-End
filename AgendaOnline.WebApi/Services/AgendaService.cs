@@ -207,7 +207,8 @@ namespace AgendaOnline.WebApi.Services
             {
                 if (agendamentoIndisponivel.ToString() == "")
                 {
-                    if (agendamentoModel.DataHora > DateTime.Now)
+                    //agendamentoModel.DataHora > DateTime.Now
+                    if (true)
                     {
                         if (clientesAgendados.Length <= 0)
                         {
@@ -334,7 +335,7 @@ namespace AgendaOnline.WebApi.Services
                 }
 
             }
-            else if (idDataServicosVencidos.Length > 0)
+            if (idDataServicosVencidos.Length > 0)
             {
                 try
                 {

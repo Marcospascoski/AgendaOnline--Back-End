@@ -408,7 +408,7 @@ namespace AgendaOnline.Repository
 
         public Agenda[] ObterServicosVencidosAsync(int UserId)
         {
-            Agenda[] query = _context.Agendas.Where(a => a.AdmId == UserId || a.UsuarioId == UserId && a.DataHora.Date < DateTime.Now.Date).ToArray();
+            Agenda[] query = _context.Agendas.Where(a => (a.AdmId == UserId || a.UsuarioId == UserId) && a.DataHora.Date < DateTime.Now.Date).ToArray();
 
             return query;
         }
