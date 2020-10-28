@@ -321,11 +321,12 @@ namespace AgendaOnline.WebApi.Services
             var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(UserId);
             var idDataServicosVencidos = _repo.ObterServicosVencidosAsync(UserId);
             
-            if (idDataServicoFinalizado.Length > 0)
+
+            foreach (var agendamento in idDataServicoFinalizado)
             {
                 try
                 {
-                    _repo.DeleteRange(idDataServicoFinalizado);
+                    _repo.Delete(agendamento);
                     _repo.SaveChangesAsync();
                 }
                 catch (DbConcurrencyException e)
@@ -334,11 +335,11 @@ namespace AgendaOnline.WebApi.Services
                 }
 
             }
-            if (idDataServicosVencidos.Length > 0)
+            foreach (var agendamento in idDataServicosVencidos)
             {
                 try
                 {
-                    _repo.DeleteRange(idDataServicoFinalizado);
+                    _repo.Delete(agendamento);
                     _repo.SaveChangesAsync();
                 }
                 catch (DbConcurrencyException e)
