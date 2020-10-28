@@ -207,8 +207,7 @@ namespace AgendaOnline.WebApi.Services
             {
                 if (agendamentoIndisponivel.ToString() == "")
                 {
-                    //agendamentoModel.DataHora > DateTime.Now
-                    if (true)
+                    if (agendamentoModel.DataHora > DateTime.Now)
                     {
                         if (clientesAgendados.Length <= 0)
                         {
@@ -318,10 +317,10 @@ namespace AgendaOnline.WebApi.Services
 
         public void MotorRemocao(int UserId)
         {
-
+            
             var idDataServicoFinalizado = _repo.ObterServicosFinalizadosAsync(UserId);
             var idDataServicosVencidos = _repo.ObterServicosVencidosAsync(UserId);
-
+            
             if (idDataServicoFinalizado.Length > 0)
             {
                 try
