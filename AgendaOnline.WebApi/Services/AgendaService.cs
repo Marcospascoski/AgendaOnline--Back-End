@@ -157,10 +157,9 @@ namespace AgendaOnline.WebApi.Services
             }
         }
 
-        public async Task<List<string>> ListaDiasAgendados(int AdmId)
+        public async Task<List<string>> ListaDiasAgendados(List<AgendaDto> agendamentos)
         {
-            var dias = await _repo.ObterDiasAgendadosAsync(AdmId);
-            var diasDto = _mapper.Map<AgendaDto[]>(dias);
+            var diasDto = _mapper.Map<AgendaDto[]>(agendamentos);
             var results = diasDto.ToArray().Select(x => x.DataHora.Day + "/" + x.DataHora.Month + "/" + x.DataHora.Year).Distinct().ToList();
 
             if (results.Count > 0)
@@ -549,5 +548,38 @@ namespace AgendaOnline.WebApi.Services
 
         }
 
+        public async Task<List<AgendaDto>> ListaAgendamentosPorUsuarioAsync(int userId)
+        {
+            try
+            {
+                List<Agenda> agendaAtual = await _repo.ObterTodosAgendamentosPorUsuarioAsync(userId);
+                List<AgendaDto> agendamentoAtualDto = _mapper.Map<List<AgendaDto>>(agendaAtual);
+                if (agendamentoAtualDto.Count > 0)
+                {
+                    List<Agenda> servicosFinalizados = _repo.ObterServicosFinalizadosAsync(userId).ToList();
+                    List<AgendaDto> servicosFinalizadoDto = _mapper.Map<List<AgendaDto>>(servicosFinalizados);
+                    List<Agenda> servicosVencidos = _repo.ObterServicosVencidosAsync(userId).ToList();
+                    List<AgendaDto> servicosVencidosDto = _mapper.Map<List<AgendaDto>>(servicosVencidos);
+
+                    foreach (var item in servicosFinalizadoDto)
+                    {
+                        agendamentoAtualDto.RemoveAll(x => x.Id == item.Id);
+                    }
+                    foreach (var item in servicosVencidosDto)
+                    {
+                        agendamentoAtualDto.RemoveAll(x => x.Id == item.Id);
+                    }
+
+                    return agendamentoAtualDto.OrderBy(x => x.DataHora).ToList();
+                }
+                return new List<AgendaDto>();
+                   
+            }
+            catch (DbConcurrencyException e)
+            {
+                throw new DbConcurrencyException(e.Message);
+            }
+
+        }
     }
 }

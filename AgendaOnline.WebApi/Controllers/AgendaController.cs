@@ -39,10 +39,10 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                List<Agenda> agendaAtual2 = _repo.ObterTodosAgendamentosPorUsuarioAsync(UserId).Result;
-                if (agendaAtual2.Count > 0)
+                List<AgendaDto> agendaAtual = _service.ListaAgendamentosPorUsuarioAsync(UserId).Result;
+                if (agendaAtual.Count > 0)
                 {
-                    return Ok(agendaAtual2.OrderBy(x => x.DataHora));
+                    return Ok(agendaAtual.OrderBy(x => x.DataHora));
                 }
                 else
                 {
@@ -288,7 +288,8 @@ namespace AgendaOnline.WebApi.Controllers
         {
             try
             {
-                List<string> diasAgendadosService = await _service.ListaDiasAgendados(AdmId);
+                List<AgendaDto> agendasDto = await _service.ListaAgendamentosPorUsuarioAsync(AdmId);
+                List<string> diasAgendadosService = await _service.ListaDiasAgendados(agendasDto);
                 if (diasAgendadosService.Count > 0)
                 {
                     return Ok(diasAgendadosService);
